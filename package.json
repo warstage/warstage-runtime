@@ -8,9 +8,11 @@
     "buffer": "~5.4.3"
   },
   "devDependencies": {
-    "typescript": "~3.7.4"
+    "tslint": "^5.20.1",
+    "typescript": "^3.7.4"
   },
   "scripts": {
+    "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -28,5 +30,10 @@
   "bugs": {
     "url": "https://github.com/warstage/warstage-runtime/issues"
   },
-  "homepage": "https://github.com/warstage/warstage-runtime#readme"
+  "homepage": "https://github.com/warstage/warstage-runtime#readme",
+  "files": [
+    "dist/**/*",
+    "LICENSE.md",
+    "README.md"
+  ]
 }
