@@ -1,8 +1,15 @@
 {
   "name": "warstage-runtime",
-  "version": "0.9.0",
+  "version": "0.1.0",
   "description": "An API for writing bots and mods for the Warstage war-gaming platform",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "dependencies": {
+    "buffer": "~5.4.3"
+  },
+  "devDependencies": {
+    "typescript": "~3.7.4"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -17,7 +24,7 @@
     "modding"
   ],
   "author": "Felix Ungman",
-  "license": "GPL-3.0",
+  "license": "GPL-3.0+",
   "bugs": {
     "url": "https://github.com/warstage/warstage-runtime/issues"
   },
