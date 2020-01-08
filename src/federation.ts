@@ -13,15 +13,12 @@ export interface RuntimeInterface {
     sendServiceRequestToRuntime(federationId: string, service: string, value: Value): Promise<any>;
 }
 
-// @ts-ignore
-export type Value = undefined
-    | null
-    | boolean
-    | number
-    | string
-    | ObjectRef
-    | Value[]
-    | {[key: string]: Value};
+export interface ValueArray extends Array<Value> {}
+export interface ValueStruct { [key: string]: Value; }
+export type Value = undefined | null | boolean | number | string
+    | Uint8Array | ObjectRef | ValueArray | ValueStruct
+    |  { x: number; y: number }
+    |  { x: number; y: number; z: number };
 
 
 export interface ObjectRef {
@@ -352,7 +349,7 @@ export class Federation {
 
     // Events
 
-    observeEvents(event: string, observer: (params: Value) => void) {
+    observeEvents(event: string, observer: (params: any) => void) {
         this.eventsObservers[event] = observer;
     }
 
@@ -370,7 +367,7 @@ export class Federation {
 
     // Services
 
-    provideService(service: string, serviceProvider: (params: Value) => Promise<any> | void) {
+    provideService(service: string, serviceProvider: (params: any) => Promise<any> | void) {
         this.serviceProviders[service] = serviceProvider;
     }
 
