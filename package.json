@@ -5,10 +5,13 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "dependencies": {
-    "buffer": "~5.4.3"
+    "buffer": "~5.4.3",
+    "rxjs": "6.5.4",
+    "rxjs-compat": "6.5.4"
   },
   "devDependencies": {
     "@types/jasmine": "^3.5.0",
+    "@types/node": "13.1.4",
     "karma": "^4.4.1",
     "karma-chrome-launcher": "^3.1.0",
     "karma-coverage-istanbul-reporter": "^2.1.1",
@@ -16,7 +19,7 @@
     "karma-jasmine-html-reporter": "^1.5.1",
     "karma-typescript": "^4.1.1",
     "tslint": "^5.20.1",
-    "typescript": "^3.7.4"
+    "typescript": "~3.7.4"
   },
   "scripts": {
     "build": "tsc",
