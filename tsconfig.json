@@ -1,17 +1,19 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
-    "target": "es5",
+    "composite": true,
     "declaration": true,
+    "declarationMap": true,
     "downlevelIteration": true,
-    "outDir": "dist",
-    "typeRoots": [
-      "node_modules/@types"
-    ],
-    "sourceMap": true,
     "lib": [
       "es2018",
       "dom"
+    ],
+    "module": "commonjs",
+    "outDir": "dist",
+    "sourceMap": true,
+    "target": "es5",
+    "typeRoots": [
+      "node_modules/@types"
     ]
   },
   "exclude": [

@@ -4,10 +4,10 @@
 import {Compressor} from './compressor';
 import {Decompressor} from './decompressor';
 import {Payload} from './messages';
-import {RuntimeSession} from './runtime-session';
+import {RuntimeConnection} from './runtime-connection';
 import Timeout = NodeJS.Timeout;
 
-export class WebSocketSession implements RuntimeSession {
+export class WebSocketConnection implements RuntimeConnection {
     private onOpenCallback: () => void;
     private onCloseCallback: () => void;
     private onPacketCallback: (Payload) => void;
@@ -33,7 +33,7 @@ export class WebSocketSession implements RuntimeSession {
     }
 
     private getWebSocketUrl() {
-        const port = this.port || WebSocketSession.getWebSocketPortFromSearchParams() || '33081';
+        const port = this.port || WebSocketConnection.getWebSocketPortFromSearchParams() || '33081';
         return 'ws://127.0.0.1:' + port + '/';
     }
 
@@ -144,7 +144,7 @@ export class WebSocketSession implements RuntimeSession {
     }
 
     fork(processId: string) {
-        return new WebSocketSession(this.port, processId);
+        return new WebSocketConnection(this.port, processId);
     }
 
     sendPacket(payload: Payload) {

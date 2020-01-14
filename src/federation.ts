@@ -5,13 +5,7 @@ import {ObjectChange, ObjectChangesMessage} from './messages';
 import {PartialObserver, Subject, Subscribable, Subscription} from 'rxjs';
 import getOwnPropertyDescriptor = Reflect.getOwnPropertyDescriptor;
 import {Buffer} from 'buffer';
-
-export interface RuntimeInterface {
-    sendObjectChangesToRuntime(federationId: string, objectId: {$id: string}, className: string, change: number,
-                               propertyName: string, value: Value);
-    sendEventNotificationToRuntime(federationId: string, eventName: string, value: Value);
-    sendServiceRequestToRuntime(federationId: string, service: string, value: Value): Promise<any>;
-}
+import {RuntimeSession} from './runtime-session';
 
 export interface ValueArray extends Array<Value> {}
 export interface ValueStruct { [key: string]: Value; }
@@ -176,7 +170,7 @@ export class Federation {
         return value && typeof value === 'object';
     }
 
-    constructor(private runtime: RuntimeInterface, public federationId: string) {
+    constructor(private runtime: RuntimeSession, public federationId: string) {
     }
 
     /*leaveExecution() {

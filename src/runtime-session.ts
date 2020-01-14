@@ -1,15 +1,22 @@
-// Copyright Felix Ungman. All rights reserved.
-// Licensed under GNU General Public License version 3 or later.
+import {Value} from './federation';
 
-import {Payload} from './messages';
+export abstract class RuntimeSession {
+    abstract sendObjectChangesToRuntime(
+        federationId: string,
+        objectId: {$id: string},
+        className: string,
+        change: number,
+        propertyName: string,
+        value: Value);
 
-export interface RuntimeSession {
-    onOpen(callback: () => void): void;
-    onClose(callback: () => void): void;
-    onPacket(callback: (Payload) => void): void;
-    open();
-    close();
-    fork(processId: string): RuntimeSession;
-    sendPacket(payload: Payload);
-    getProcessId(): string;
+    abstract sendEventNotificationToRuntime(
+        federationId: string,
+        eventName: string,
+        value: Value);
+
+    abstract sendServiceRequestToRuntime(
+        federationId: string,
+        service: string,
+        value: Value): Promise<any>;
 }
+

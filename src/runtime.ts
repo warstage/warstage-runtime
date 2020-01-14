@@ -1,8 +1,7 @@
 // Copyright Felix Ungman. All rights reserved.
 // Licensed under GNU General Public License version 3 or later.
 
-import {Federation, RuntimeInterface, Value} from './federation';
-import {RuntimeSession} from './runtime-session';
+import {Federation, Value} from './federation';
 import {
     EventDispatchMessage,
     Message,
@@ -15,6 +14,8 @@ import {
     ServiceRejectMessage,
     ServiceRequestMessage
 } from './messages';
+import {RuntimeConnection} from './runtime-connection';
+import {RuntimeSession} from './runtime-session';
 
 class Authentication {
     accessToken: string;
@@ -23,11 +24,11 @@ class Authentication {
     imageUrl: string;
 }
 
-export class RuntimeClient implements RuntimeInterface {
+export class Runtime implements RuntimeSession {
     public federations: { [name: string]: Federation } = {};
     public onError: (message: Error) => void = null;
 
-    public session: RuntimeSession;
+    public session: RuntimeConnection;
     private sessionIsOpen  = false;
     private serviceRequests: {
         [requestId: number]: { federationId: string, resolve: (x: Value) => void, reject: (x: Value | Error) => void }
@@ -78,7 +79,7 @@ export class RuntimeClient implements RuntimeInterface {
     constructor(private processType = ProcessType.Headup) {
     }
 
-    connect(session: RuntimeSession) {
+    connect(session: RuntimeConnection) {
         this.session = session;
         this.session.onOpen(() => {
             this.sessionIsOpen = true;
@@ -334,7 +335,7 @@ export class RuntimeClient implements RuntimeInterface {
                         mm: [{
                             m: MessageType.ServiceReject,
                             r: message.r,
-                            v: RuntimeClient.toReason(error)
+                            v: Runtime.toReason(error)
                         }]
                     });
                 });
@@ -366,7 +367,7 @@ export class RuntimeClient implements RuntimeInterface {
             const federation = this.federations[serviceRequest.federationId];
             if (federation) {
                 const value = federation.decodeObjectIds(message.v);
-                serviceRequest.reject(RuntimeClient.toError(value));
+                serviceRequest.reject(Runtime.toError(value));
             } else {
                 serviceRequest.reject(new Error('federation not found'));
             }

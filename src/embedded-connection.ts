@@ -1,12 +1,12 @@
 // Copyright Felix Ungman. All rights reserved.
 // Licensed under GNU General Public License version 3 or later.
 
-import {RuntimeSession} from './runtime-session';
+import {RuntimeConnection} from './runtime-connection';
 import {Payload} from './messages';
 import {Compressor} from './compressor';
 import {Decompressor} from './decompressor';
 
-export class EmbeddedSession implements RuntimeSession {
+export class EmbeddedConnection implements RuntimeConnection {
     private onOpenCallback: () => void = null;
     private onCloseCallback: () => void = null;
     private onPacketCallback: (payload: Payload) => void = null;
@@ -16,7 +16,7 @@ export class EmbeddedSession implements RuntimeSession {
 
     constructor() {
         if (!window.parent) {
-            throw Error('EmbeddedSession: missing window.parent');
+            throw Error('EmbeddedConnection: missing window.parent');
         }
     }
 
@@ -45,7 +45,7 @@ export class EmbeddedSession implements RuntimeSession {
                             const packet = this.decompressor.decode(buffer) as Payload;
                             this.onPacketCallback(packet);
                         } else {
-                            console.error('EmbeddedSession: missing onPacket callback');
+                            console.error('EmbeddedConnection: missing onPacket callback');
                         }
                     } else if (event.data.open) {
                         if (this.onOpenCallback) {
@@ -63,7 +63,7 @@ export class EmbeddedSession implements RuntimeSession {
             window.addEventListener('message', this.messageListener);
             window.parent.postMessage({ open: true }, '*');
         } else {
-            console.warn('EmbeddedSession.open(): session is already opened');
+            console.warn('EmbeddedConnection.open(): session is already opened');
         }
     }
 
@@ -71,7 +71,7 @@ export class EmbeddedSession implements RuntimeSession {
         if (this.messageListener) {
             window.parent.postMessage({ close: true }, '*');
         } else {
-            console.warn('EmbeddedSession.close(): session is not open');
+            console.warn('EmbeddedConnection.close(): session is not open');
         }
     }
 
