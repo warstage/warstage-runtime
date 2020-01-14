@@ -20,11 +20,6 @@ export class WebSocketConnection implements RuntimeConnection {
     private queueIn: Blob[] = [];
     private reader: FileReader = null;
 
-    private static getWebSocketPortFromSearchParams(): string | null {
-        const params = new URLSearchParams(document.location.search.substring(1));
-        return params.get('port');
-    }
-
     static toHexString(byteArray) {
         return Array.from(byteArray, (byte: number) => {
             // tslint:disable-next-line:no-bitwise
@@ -32,12 +27,7 @@ export class WebSocketConnection implements RuntimeConnection {
         }).join('');
     }
 
-    private getWebSocketUrl() {
-        const port = this.port || WebSocketConnection.getWebSocketPortFromSearchParams() || '33081';
-        return 'ws://127.0.0.1:' + port + '/';
-    }
-
-    constructor(private port?: string, private processId?: string) {
+    constructor(private url) {
     }
 
     private reset() {
@@ -76,7 +66,7 @@ export class WebSocketConnection implements RuntimeConnection {
             // console.error('WebSocketSession.open: missing onMessage callback');
             return;
         }
-        this.webSocket = new WebSocket(this.getWebSocketUrl(), 'warstage');
+        this.webSocket = new WebSocket(this.url, 'warstage');
         this.webSocket.addEventListener('open', () => {
             // console.log("WebSocketSession open", event);
             this.isOpen = true;
@@ -143,10 +133,6 @@ export class WebSocketConnection implements RuntimeConnection {
         this.reset();
     }
 
-    fork(processId: string) {
-        return new WebSocketConnection(this.port, processId);
-    }
-
     sendPacket(payload: Payload) {
         if (this.isOpen) {
             const data = this.compressor.encode({p: payload});
@@ -154,13 +140,5 @@ export class WebSocketConnection implements RuntimeConnection {
         } else {
             this.queueOut.push(payload);
         }
-    }
-
-    getProcessId(): string {
-        if (this.processId) {
-            return this.processId;
-        }
-        const params = new URLSearchParams(document.location.search.substring(1));
-        return params.get('hpid');
     }
 }

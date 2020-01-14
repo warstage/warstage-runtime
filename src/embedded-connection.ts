@@ -75,16 +75,7 @@ export class EmbeddedConnection implements RuntimeConnection {
         }
     }
 
-    fork(processId: string) {
-        return null;
-    }
-
     sendPacket(payload: Payload) {
         window.parent.postMessage({ packet: this.compressor.encode(payload) }, '*');
-    }
-
-    getProcessId(): string {
-        const params = new URLSearchParams(document.location.search.substring(1));
-        return params.get('pid');
     }
 }

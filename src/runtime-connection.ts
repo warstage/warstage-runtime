@@ -9,7 +9,5 @@ export interface RuntimeConnection {
     onPacket(callback: (Payload) => void): void;
     open();
     close();
-    fork(processId: string): RuntimeConnection;
     sendPacket(payload: Payload);
-    getProcessId(): string;
 }

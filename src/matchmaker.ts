@@ -1,4 +1,7 @@
-import {ObjectRef} from './federation';
+// Copyright Felix Ungman. All rights reserved.
+// Licensed under GNU General Public License version 3 or later.
+
+import {ObjectRef} from './object';
 
 export interface Session extends ObjectRef {
     playerId: string;

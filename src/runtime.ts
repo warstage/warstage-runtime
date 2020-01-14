@@ -1,7 +1,7 @@
 // Copyright Felix Ungman. All rights reserved.
 // Licensed under GNU General Public License version 3 or later.
 
-import {Federation, Value} from './federation';
+import {Federation} from './federation';
 import {
     EventDispatchMessage,
     Message,
@@ -9,13 +9,14 @@ import {
     ObjectChangesMessage,
     PacketType,
     Payload,
-    ProcessType,
     ServiceFulfillMessage,
     ServiceRejectMessage,
     ServiceRequestMessage
 } from './messages';
+import {Value} from './object';
 import {RuntimeConnection} from './runtime-connection';
 import {RuntimeSession} from './runtime-session';
+import {RuntimeConfiguration} from './runtime-configuration';
 
 class Authentication {
     accessToken: string;
@@ -24,12 +25,13 @@ class Authentication {
     imageUrl: string;
 }
 
-export class Runtime implements RuntimeSession {
+export class Runtime extends RuntimeSession {
+    public configuration: RuntimeConfiguration = null;
     public federations: { [name: string]: Federation } = {};
     public onError: (message: Error) => void = null;
 
-    public session: RuntimeConnection;
-    private sessionIsOpen  = false;
+    public connection: RuntimeConnection;
+    private connectionIsOpen  = false;
     private serviceRequests: {
         [requestId: number]: { federationId: string, resolve: (x: Value) => void, reject: (x: Value | Error) => void }
     } = {};
@@ -76,33 +78,35 @@ export class Runtime implements RuntimeSession {
         };
     }
 
-    constructor(private processType = ProcessType.Headup) {
+    constructor() {
+        super();
     }
 
-    connect(session: RuntimeConnection) {
-        this.session = session;
-        this.session.onOpen(() => {
-            this.sessionIsOpen = true;
+    startup(configuration: RuntimeConfiguration) {
+        this.configuration = configuration;
+        this.connection = this.configuration.newConnection();
+        this.connection.onOpen(() => {
+            this.connectionIsOpen = true;
             this.enqueueOrSendOutgoingPayload({
                 m: PacketType.Handshake,
-                id: session.getProcessId(),
-                pt: this.processType
+                id: this.configuration.processId,
+                pt: this.configuration.processType
             });
             for (const federationId in this.federations) {
                 if (this.federations.hasOwnProperty(federationId)) {
                     this.enqueueOrSendOutgoingPayload({
                         m: PacketType.FederationAdded,
                         x: federationId,
-                        id: this.session.getProcessId(),
+                        id: this.configuration.processId
                     });
                 }
             }
             this.trySendAuthenticateMessage();
         });
-        this.session.onClose(() => {
-            this.sessionIsOpen = false;
+        this.connection.onClose(() => {
+            this.connectionIsOpen = false;
         });
-        this.session.onPacket(payload => {
+        this.connection.onPacket(payload => {
             try {
                 this.dispatchPacket(payload);
             } catch (e) {
@@ -111,7 +115,7 @@ export class Runtime implements RuntimeSession {
                 }
             }
         });
-        this.session.open();
+        this.connection.open();
     }
 
     /*isConnected() {
@@ -129,7 +133,7 @@ export class Runtime implements RuntimeSession {
     }
 
     trySendAuthenticateMessage() {
-        if (this.sessionIsOpen && this.authentication) {
+        if (this.connectionIsOpen && this.authentication) {
             this.enqueueOrSendOutgoingPayload({
                 m: PacketType.Authenticate,
                 a: this.authentication.accessToken,
@@ -143,11 +147,11 @@ export class Runtime implements RuntimeSession {
     joinFederation(federationId: string): Federation {
         const result = new Federation(this, federationId);
         this.federations[federationId] = result;
-        if (this.session) {
+        if (this.connection) {
             this.enqueueOrSendOutgoingPayload({
                 m: PacketType.FederationAdded,
                 x: federationId,
-                id: this.session.getProcessId(),
+                id: this.configuration.processId
             });
         }
         return result;
@@ -158,7 +162,7 @@ export class Runtime implements RuntimeSession {
             this.enqueueOrSendOutgoingPayload({
                 m: PacketType.FederationRemoved,
                 x: federationId,
-                id: this.session.getProcessId(),
+                id: this.configuration.processId
             });
             delete this.federations[federationId];
         }
@@ -190,7 +194,7 @@ export class Runtime implements RuntimeSession {
 
     sendObjectChangesToRuntime(federationId: string, objectId: {$id: string}, className: string, change: number,
                                propertyName: string, value: Value) {
-        if (this.session) {
+        if (this.connection) {
             const p: {[name: string]: { v: Value, t: number} } = {};
             if (propertyName != null) {
                 p[propertyName] = { v: value, t: 0 };
@@ -207,12 +211,12 @@ export class Runtime implements RuntimeSession {
                 }]
             });
         } else if (this.onError) {
-            this.onError(new Error(`sendObjectChangesToRemote(${className}): no session`));
+            this.onError(new Error(`sendObjectChangesToRemote(${className}): no connection`));
         }
     }
 
     sendEventNotificationToRuntime(federationId: string, eventName: string, value: Value) {
-        if (this.session) {
+        if (this.connection) {
             this.enqueueOrSendOutgoingPayload({
                 m: PacketType.Messages,
                 mm: [{
@@ -223,14 +227,14 @@ export class Runtime implements RuntimeSession {
                 }]
             });
         } else if (this.onError) {
-            this.onError(new Error(`sendEventToRemote(${eventName}): no session`));
+            this.onError(new Error(`sendEventToRemote(${eventName}): no connection`));
         }
     }
 
     sendServiceRequestToRuntime(federationId: string, service: string, value: Value): Promise<any> {
         const requestId = ++this.lastServiceRequestId;
         return new Promise((resolve, reject) => {
-            if (this.session) {
+            if (this.connection) {
                 this.serviceRequests[requestId] = {
                     federationId,
                     resolve,
@@ -252,7 +256,7 @@ export class Runtime implements RuntimeSession {
                     reject(error);
                 }
             } else {
-                const message = `sendServiceRequestToRemote(${service}): no session`;
+                const message = `sendServiceRequestToRemote(${service}): no connection`;
                 if (this.onError) {
                     this.onError(new Error(message));
                 }
@@ -262,17 +266,17 @@ export class Runtime implements RuntimeSession {
     }
 
     private enqueueOrSendOutgoingPayload(payload: Payload) {
-        if (this.session) {
+        if (this.connection) {
             if (payload.m === PacketType.Messages) {
                 this.enqueueOutgoingMessages(payload.mm);
             } else {
                 this.flushOutgoingMessages();
-                this.session.sendPacket(payload);
+                this.connection.sendPacket(payload);
             }
         } else if (this.onError) {
-            this.onError(new Error('sendPacket: no session'));
+            this.onError(new Error('sendPacket: no connection'));
         } else {
-            console.error('sendPacket: no session');
+            console.error('sendPacket: no connection');
         }
     }
 
@@ -290,7 +294,7 @@ export class Runtime implements RuntimeSession {
 
     private flushOutgoingMessages() {
         if (this.outgoingMessages.length) {
-            this.session.sendPacket({ m: PacketType.Messages, mm: this.outgoingMessages });
+            this.connection.sendPacket({ m: PacketType.Messages, mm: this.outgoingMessages });
             this.outgoingMessages = [];
         }
         if (this.outgoingImmediate) {
