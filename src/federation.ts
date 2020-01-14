@@ -176,7 +176,7 @@ export class Federation {
         return value && typeof value === 'object';
     }
 
-    constructor(private runtime: RuntimeInterface, private federationId: string) {
+    constructor(private runtime: RuntimeInterface, public federationId: string) {
     }
 
     /*leaveExecution() {

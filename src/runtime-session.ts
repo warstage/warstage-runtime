@@ -9,6 +9,7 @@ export interface RuntimeSession {
     onPacket(callback: (Payload) => void): void;
     open();
     close();
+    fork(processId: string): RuntimeSession;
     sendPacket(payload: Payload);
     getProcessId(): string;
 }

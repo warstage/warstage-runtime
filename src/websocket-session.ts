@@ -33,11 +33,11 @@ export class WebSocketSession implements RuntimeSession {
     }
 
     private getWebSocketUrl() {
-        const port = this.port || WebSocketSession.getWebSocketPortFromSearchParams() || '33082';
+        const port = this.port || WebSocketSession.getWebSocketPortFromSearchParams() || '33081';
         return 'ws://127.0.0.1:' + port + '/';
     }
 
-    constructor(private port?: string) {
+    constructor(private port?: string, private processId?: string) {
     }
 
     private reset() {
@@ -64,7 +64,7 @@ export class WebSocketSession implements RuntimeSession {
 
     open() {
         if (!this.reopener) {
-            this.reopener = setInterval(() => {
+            this.reopener = global.setInterval(() => {
                 if (!this.webSocket) {
                     // console.log('WebSocketSession reopen');
                     this.open();
@@ -143,6 +143,10 @@ export class WebSocketSession implements RuntimeSession {
         this.reset();
     }
 
+    fork(processId: string) {
+        return new WebSocketSession(this.port, processId);
+    }
+
     sendPacket(payload: Payload) {
         if (this.isOpen) {
             const data = this.compressor.encode({p: payload});
@@ -153,6 +157,9 @@ export class WebSocketSession implements RuntimeSession {
     }
 
     getProcessId(): string {
+        if (this.processId) {
+            return this.processId;
+        }
         const params = new URLSearchParams(document.location.search.substring(1));
         return params.get('hpid');
     }

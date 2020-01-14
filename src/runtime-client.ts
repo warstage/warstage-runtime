@@ -27,7 +27,7 @@ export class RuntimeClient implements RuntimeInterface {
     public federations: { [name: string]: Federation } = {};
     public onError: (message: Error) => void = null;
 
-    private session: RuntimeSession;
+    public session: RuntimeSession;
     private sessionIsOpen  = false;
     private serviceRequests: {
         [requestId: number]: { federationId: string, resolve: (x: Value) => void, reject: (x: Value | Error) => void }
@@ -75,6 +75,9 @@ export class RuntimeClient implements RuntimeInterface {
         };
     }
 
+    constructor(private processType = ProcessType.Headup) {
+    }
+
     connect(session: RuntimeSession) {
         this.session = session;
         this.session.onOpen(() => {
@@ -82,7 +85,7 @@ export class RuntimeClient implements RuntimeInterface {
             this.enqueueOrSendOutgoingPayload({
                 m: PacketType.Handshake,
                 id: session.getProcessId(),
-                pt: ProcessType.Headup
+                pt: this.processType
             });
             for (const federationId in this.federations) {
                 if (this.federations.hasOwnProperty(federationId)) {
