@@ -92,6 +92,15 @@ export class Runtime extends RuntimeSession {
                 id: this.configuration.processId,
                 pt: this.configuration.processType
             });
+            if (this.configuration.subjectId) {
+                this.enqueueOrSendOutgoingPayload({
+                    m: PacketType.Authenticate,
+                    a: '',
+                    s: this.configuration.subjectId,
+                    n: '',
+                    i: ''
+                });
+            }
             for (const federationId in this.federations) {
                 if (this.federations.hasOwnProperty(federationId)) {
                     this.enqueueOrSendOutgoingPayload({

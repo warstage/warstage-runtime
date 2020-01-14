@@ -12,6 +12,7 @@ export class RuntimeConfiguration {
     newConnection: () => RuntimeConnection;
     processType: ProcessType;
     processId: string;
+    subjectId: string;
 
     static autoDetect(): RuntimeConfiguration {
         const result = new RuntimeConfiguration();
@@ -25,6 +26,7 @@ export class RuntimeConfiguration {
         const pt = params.get('pt');
         result.processType = pt ? Number(pt) : ProcessType.Agent;
         result.processId = params.get('pid') || generateObjectId();
+        result.subjectId = params.get('sub');
         return result;
     }
 }
