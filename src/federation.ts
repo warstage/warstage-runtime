@@ -5,8 +5,7 @@ import {ObjectChange, ObjectChangesMessage} from './messages';
 import {Buffer} from 'buffer';
 import {RuntimeSession} from './runtime-session';
 import {generateObjectId} from './object-id';
-import {defineObjectProperty, ObjectRef, Value} from './object';
-import {ObjectClass} from './object-class';
+import {defineObjectProperty, ObjectClass, ObjectRef, Value} from './object';
 
 
 export class Federation {

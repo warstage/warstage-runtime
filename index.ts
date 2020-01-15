@@ -6,7 +6,6 @@ export * from './src/federation';
 export * from './src/matchmaker';
 export * from './src/messages';
 export * from './src/object';
-export * from './src/object-class';
 export * from './src/object-id';
 export * from './src/runtime';
 export * from './src/runtime-configuration';
