@@ -24,8 +24,8 @@ export interface Unit extends ObjectRef {
     };
     fighters: vec2[];
     placement: { x: number, y: number, z: number };
-    xxx_position?: any;
-    xxx_routing?: boolean;
+    center?: { x: number, y: number };
+    routed?: boolean;
     deletedByGesture: boolean;
 }
 
