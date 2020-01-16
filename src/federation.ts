@@ -10,6 +10,7 @@ import {defineObjectProperty, ObjectClass, ObjectRef, Value} from './object';
 
 export class Federation {
     private objectInstances: { [id: string]: ObjectRef } = {};
+    private undefinedInstances: ObjectRef[] = [];
     private objectClasses: {[name: string]: ObjectClass<ObjectRef>} = {};
     private eventsObservers: { [name: string]: (params: Value) => void } = {};
     private serviceProviders: { [name: string]: (params: Value) => Promise<any> | void } = {};
@@ -56,67 +57,102 @@ export class Federation {
     }*/
 
     public processNativeChanges(message: ObjectChangesMessage) {
-        const objectInstance = this.getOrCreateObjectRef(message.i.$id);
+        const objectInstance = this.getOrCreateObjectRef(message.i.$id) as any;
         if (!objectInstance._class) {
-            (objectInstance as any)._class = message.c;
+            objectInstance._class = message.c;
         }
-        const objectClass = this.objects(objectInstance._class);
         if (!objectInstance.$class) {
-            (objectInstance as any).$class = objectClass;
+            const objectClass = this.objects(objectInstance._class);
+            objectInstance.$class = objectClass;
             for (const propertyName of objectClass.propertyNames) {
                 defineObjectProperty(this, objectInstance, propertyName);
+                objectInstance[propertyName + '$changed'] = false;
             }
         }
 
-        switch (message.t) {
-            case ObjectChange.CREATE:
-                if (objectInstance.$defined) {
-                    // console.warn('object instance already created');
-                } else {
-                    (objectInstance as any)._defined = true;
-                    (objectInstance as any)._defined$changed = true;
-                }
-                break;
-            case ObjectChange.DELETE:
-                (objectInstance as any)._defined = false;
-                (objectInstance as any)._defined$changed = true;
-                break;
+        const created = message.t === ObjectChange.CREATE;
+        const deleted = message.t === ObjectChange.DELETE;
+
+        if (created) {
+            if (objectInstance.$defined) {
+                // console.warn('object instance already created');
+            } else {
+                this.undefinedInstances.push(objectInstance);
+            }
+        } else if (deleted) {
+            objectInstance._defined = false;
+            objectInstance._defined$changed = true;
         }
 
         const properties = message.p;
         if (properties) {
-            for (const propertyName in properties) {
-                if (properties.hasOwnProperty(propertyName)) {
-                    defineObjectProperty(this, objectInstance, propertyName);
-                    const privateName = '-' + propertyName;
-                    objectInstance[privateName] = this.decodeObjectIds(properties[propertyName].v);
-                    objectInstance[propertyName + '$changed'] = true;
+            for (const key in properties) {
+                if (properties.hasOwnProperty(key)) {
+                    defineObjectProperty(this, objectInstance, key);
+                    const privateName = '-' + key;
+                    objectInstance[privateName] = this.decodeObjectIds(properties[key].v);
+                    if (!created) {
+                        objectInstance[key + '$changed'] = true;
+                    }
                 }
             }
         }
 
-        objectClass.subject.next(objectInstance);
-
-        if (message.t === ObjectChange.DELETE) {
-            delete this.objectInstances[message.i.$id];
+        if (deleted || objectInstance.$defined) {
+            objectInstance.$class.subject.next(objectInstance);
+            objectInstance._defined$changed = false;
         }
 
-        (objectInstance as any)._defined$changed = false;
+        if (deleted) {
+            delete this.objectInstances[message.i.$id];
+            const index = this.undefinedInstances.findIndex(x => x === objectInstance);
+            if (index !== -1) {
+                delete this.undefinedInstances[index];
+            }
+        }
 
         if (properties) {
-            for (const propertyName in properties) {
-                if (properties.hasOwnProperty(propertyName)) {
-                    objectInstance[propertyName + '$changed'] = false;
+            for (const key in properties) {
+                if (properties.hasOwnProperty(key)) {
+                    objectInstance[key + '$changed'] = false;
+                }
+            }
+        }
+
+        this.defineUndefinedInstances();
+    }
+
+    defineUndefinedInstances() {
+        while (true) {
+            const index = this.undefinedInstances.findIndex(x => !this.objectHasUndefinedRefs(x));
+            if (index === -1) {
+                return;
+            }
+            const objectInstance = this.undefinedInstances[index] as any;
+            this.undefinedInstances.splice(index, 1);
+
+            for (const key in objectInstance) {
+                if (objectInstance.hasOwnProperty(key) && !key.startsWith('$') && key.endsWith('$changed')) {
+                    objectInstance[key] = true;
+                }
+            }
+
+            objectInstance._defined = true;
+            objectInstance.$class.subject.next(objectInstance);
+
+            for (const key in objectInstance) {
+                if (objectInstance.hasOwnProperty(key) && !key.startsWith('$') && key.endsWith('$changed')) {
+                    objectInstance[key] = false;
                 }
             }
         }
     }
 
     createObjectInstance(className: string): ObjectRef {
-        const result = this.getOrCreateObjectRef(generateObjectId());
-        (result as any)._class = className;
-        (result as any).$class = this.objects(className);
-        (result as any)._defined = true;
+        const result = this.getOrCreateObjectRef(generateObjectId()) as any;
+        result._class = className;
+        result.$class = this.objects(className);
+        result._defined = true;
         this.runtime.sendObjectChangesToRuntime(this.federationId, result, className,
             ObjectChange.CREATE, null, null);
         return result;
@@ -178,15 +214,52 @@ export class Federation {
             }
             if (Federation._isObject(value)) {
                 const result = {};
-                for (const property in value as any) {
-                    if (value.hasOwnProperty(property)) {
-                        result[property] = this.decodeObjectIds(value[property]);
+                for (const key in value as any) {
+                    if (value.hasOwnProperty(key)) {
+                        result[key] = this.decodeObjectIds(value[key]);
                     }
                 }
                 return result;
             }
         }
         return value;
+    }
+
+    private objectHasUndefinedRefs(objectInstance: ObjectRef): boolean {
+        for (const property in objectInstance as any) {
+            if (objectInstance.hasOwnProperty(property)
+                && property.startsWith('-')
+                && objectInstance.hasOwnProperty(property.substr(1) + '$changed')
+                && this.valueHasUndefinedRefs(objectInstance[property] as Value)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private valueHasUndefinedRefs(value: Value): boolean {
+        if (value == null) {
+            return false;
+        }
+        const id = (value as any).$id;
+        if (id != null) {
+            return !this.objectInstances.hasOwnProperty(id) || !this.objectInstances[id]._defined;
+        }
+        if (value instanceof Buffer) {
+            return false;
+        }
+        if (value instanceof Array) {
+            return value.some(x => this.valueHasUndefinedRefs(x));
+        }
+        if (Federation._isObject(value)) {
+            for (const property in value as any) {
+                if (value.hasOwnProperty(property) && this.valueHasUndefinedRefs(value[property])) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        return false;
     }
 
     // Events

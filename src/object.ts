@@ -85,9 +85,9 @@ export class ObjectClass<T extends ObjectRef> implements Subscribable<T>, Iterab
 
     *[Symbol.iterator](): Iterator<T> {
         const objectInstances = (this.federation as any).objectInstances as { [id: string]: ObjectRef };
-        for (const key in objectInstances) {
-            if (objectInstances.hasOwnProperty(key)) {
-                const objectInstance = objectInstances[key];
+        for (const id in objectInstances) {
+            if (objectInstances.hasOwnProperty(id)) {
+                const objectInstance = objectInstances[id];
                 if ((objectInstance as any)._defined && objectInstance.$class === this) {
                     yield objectInstance as T;
                 }
