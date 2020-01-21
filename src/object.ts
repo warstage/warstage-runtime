@@ -47,6 +47,12 @@ export interface ObjectRef {
     $delete();
 }
 
+export interface Module extends ObjectRef {
+    readonly moduleUrl: string;
+    readonly lobbyId: string;
+    readonly sessionId: string;
+}
+
 export class ObjectClass<T extends ObjectRef> implements Subscribable<T>, Iterable<T> {
     readonly subject = new Subject<T>();
     readonly propertyNames: string[] = [];

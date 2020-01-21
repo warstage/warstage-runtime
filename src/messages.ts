@@ -5,7 +5,9 @@ export enum ProcessType {
     Agent = 1,
     Headup = 2,
     Player = 3,
-    Server = 4
+    Server = 4,
+    Master = 5,
+    Module = 6
 }
 
 export enum PacketType {

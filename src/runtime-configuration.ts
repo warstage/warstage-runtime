@@ -20,11 +20,15 @@ export class RuntimeConfiguration {
         const connect = params.get('connect');
         if (connect) {
             result.newConnection = () => new WebSocketConnection(connect);
+            result.processType = ProcessType.Agent;
         } else {
             result.newConnection = () => new EmbeddedConnection();
+            result.processType = ProcessType.Module;
         }
         const pt = params.get('pt');
-        result.processType = pt ? Number(pt) : ProcessType.Agent;
+        if (pt) {
+            result.processType = Number(pt);
+        }
         result.processId = params.get('pid') || generateObjectId();
         result.subjectId = params.get('sub');
         return result;
