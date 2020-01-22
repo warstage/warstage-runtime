@@ -47,10 +47,9 @@ export interface ObjectRef {
     $delete();
 }
 
-export interface Module extends ObjectRef {
-    readonly moduleUrl: string;
+export interface Launcher extends ObjectRef {
     readonly lobbyId: string;
-    readonly sessionId: string;
+    playerId: string;
 }
 
 export class ObjectClass<T extends ObjectRef> implements Subscribable<T>, Iterable<T> {

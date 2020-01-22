@@ -23,7 +23,7 @@ export class RuntimeConfiguration {
             result.processType = ProcessType.Agent;
         } else {
             result.newConnection = () => new EmbeddedConnection();
-            result.processType = ProcessType.Module;
+            result.processType = ProcessType.Launcher;
         }
         const pt = params.get('pt');
         if (pt) {
