@@ -13,7 +13,7 @@ export class Federation {
     private undefinedInstances: ObjectRef[] = [];
     private objectClasses: {[name: string]: ObjectClass<ObjectRef>} = {};
     private eventsObservers: { [name: string]: (params: Value) => void } = {};
-    private serviceProviders: { [name: string]: (params: Value) => Promise<any> | void } = {};
+    private serviceProviders: { [name: string]: (params: Value) => Promise<any | void> } = {};
 
     private static _isObject(value) {
         return value && typeof value === 'object';
@@ -282,16 +282,16 @@ export class Federation {
 
     // Services
 
-    provideService(service: string, serviceProvider: (params: any) => Promise<any> | void) {
+    provideService(service: string, serviceProvider: (params: any) => Promise<any | void>) {
         this.serviceProviders[service] = serviceProvider;
     }
 
-    requestService(service: string, value: Value): Promise<any> {
+    requestService(service: string, value: Value): Promise<any | void> {
         return this.requestLocalService(service, value)
             || this.runtime.sendServiceRequestToRuntime(this.federationId, service, value);
     }
 
-    requestLocalService(service: string, value: Value): Promise<any> | void {
+    requestLocalService(service: string, value: Value): Promise<any | void> | null {
         const serviceProvider = this.serviceProviders[service];
         return serviceProvider ? serviceProvider(value) : null;
     }

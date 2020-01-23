@@ -158,7 +158,7 @@ export class Runtime extends RuntimeSession {
     joinFederation(federationId: string): Federation {
         const result = new Federation(this, federationId);
         this.federations[federationId] = result;
-        if (this.connection) {
+        if (this.connectionIsOpen) {
             this.enqueueOrSendOutgoingPayload({
                 m: PacketType.FederationAdded,
                 x: federationId,
@@ -190,7 +190,7 @@ export class Runtime extends RuntimeSession {
                         this._dispatchEventFromRemote(message);
                         break;
                     case MessageType.ServiceRequest:
-                        this._dispatchServiceRequestFromRemote(message).then(() => {}, () => {});
+                        this._dispatchServiceRequestFromRemote(message);
                         break;
                     case MessageType.ServiceFulfill:
                         this._dispatchServiceFulfillFromRemote(message);
@@ -276,7 +276,7 @@ export class Runtime extends RuntimeSession {
         });
     }
 
-    private enqueueOrSendOutgoingPayload(payload: Payload) {
+    private enqueueOrSendOutgoingPayload(payload: Payload): void {
         if (this.connection) {
             if (payload.m === PacketType.Messages) {
                 this.enqueueOutgoingMessages(payload.mm);
@@ -329,37 +329,52 @@ export class Runtime extends RuntimeSession {
         }
     }
 
-    private _dispatchServiceRequestFromRemote(message: ServiceRequestMessage) {
+    private _dispatchServiceRequestFromRemote(message: ServiceRequestMessage): void {
         const federation = this.federations[message.x];
-        if (federation) {
-            const value = federation.decodeObjectIds(message.v);
-            const promise = federation.requestLocalService(message.s, value);
-            if (promise) {
-                return promise.then(result => {
-                    this.enqueueOrSendOutgoingPayload({
-                        m: PacketType.Messages,
-                        mm: [{
-                            m: MessageType.ServiceFulfill,
-                            r: message.r,
-                            v: result
-                        }]
-                    });
-                }).catch(error => {
-                    this.enqueueOrSendOutgoingPayload({
-                        m: PacketType.Messages,
-                        mm: [{
-                            m: MessageType.ServiceReject,
-                            r: message.r,
-                            v: Runtime.toReason(error)
-                        }]
-                    });
-                });
-            }
-            return Promise.reject('unknown script service: ' + message.s);
+        if (!federation) {
+            return this.enqueueOrSendOutgoingPayload({
+                m: PacketType.Messages,
+                mm: [{
+                    m: MessageType.ServiceReject,
+                    r: message.r,
+                    v: Runtime.toReason(new Error('unknown federation: ' + message.x))
+                }]
+            });
         }
+        const value = federation.decodeObjectIds(message.v);
+        const promise = federation.requestLocalService(message.s, value);
+        if (!promise) {
+            return this.enqueueOrSendOutgoingPayload({
+                m: PacketType.Messages,
+                mm: [{
+                    m: MessageType.ServiceReject,
+                    r: message.r,
+                    v: Runtime.toReason(new Error('unknown service: ' + message.s))
+                }]
+            });
+        }
+        promise.then(result => {
+            this.enqueueOrSendOutgoingPayload({
+                m: PacketType.Messages,
+                mm: [{
+                    m: MessageType.ServiceFulfill,
+                    r: message.r,
+                    v: result
+                }]
+            });
+        }).catch(error => {
+            this.enqueueOrSendOutgoingPayload({
+                m: PacketType.Messages,
+                mm: [{
+                    m: MessageType.ServiceReject,
+                    r: message.r,
+                    v: Runtime.toReason(error)
+                }]
+            });
+        });
     }
 
-    private _dispatchServiceFulfillFromRemote(message: ServiceFulfillMessage) {
+    private _dispatchServiceFulfillFromRemote(message: ServiceFulfillMessage): void {
         const serviceRequest = this.serviceRequests[message.r];
         if (serviceRequest) {
             delete this.serviceRequests[message.r];
@@ -375,7 +390,7 @@ export class Runtime extends RuntimeSession {
         }
     }
 
-    private _dispatchServiceRejectFromRemote(message: ServiceRejectMessage) {
+    private _dispatchServiceRejectFromRemote(message: ServiceRejectMessage): void {
         const serviceRequest = this.serviceRequests[message.r];
         if (serviceRequest) {
             delete this.serviceRequests[message.r];
