@@ -38,21 +38,24 @@ module.exports = function (config) {
         singleRun: false,
         restartOnFileChange: true,
         karmaTypescriptConfig: {
-            "compilerOptions": {
-                "module": "commonjs",
-                "target": "es5",
-                "declaration": true,
-                "outDir": "dist",
-                "typeRoots": [
-                    "node_modules/@types"
-                ],
-                "sourceMap": true,
-                "lib": [
+            compilerOptions: {
+                composite: true,
+                declaration: true,
+                declarationMap: true,
+                downlevelIteration: true,
+                lib: [
                     "es2018",
                     "dom"
+                ],
+                module: "commonjs",
+                outDir: "dist",
+                sourceMap: true,
+                target: "es5",
+                typeRoots: [
+                    "node_modules/@types"
                 ]
             },
-            "exclude": [
+            exclude: [
                 "node_modules",
                 "dist"
             ]
