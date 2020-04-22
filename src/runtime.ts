@@ -19,6 +19,7 @@ import {Value} from './object';
 import {RuntimeConnection} from './runtime-connection';
 import {RuntimeSession} from './runtime-session';
 import {RuntimeConfiguration} from './runtime-configuration';
+import {Subject} from 'rxjs';
 
 class Authentication {
     accessToken: string;
@@ -30,6 +31,7 @@ class Authentication {
 export class Runtime extends RuntimeSession {
     public configuration: RuntimeConfiguration = null;
     public federations: { [name: string]: Federation } = {};
+    public onStartup = new Subject();
     public onError: (message: Error) => void = null;
 
     public connection: RuntimeConnection;
@@ -40,8 +42,9 @@ export class Runtime extends RuntimeSession {
     private lastServiceRequestId = 0;
     private authentication: Authentication = null;
 
-    outgoingMessages: Message[] = [];
-    outgoingImmediate: any = null;
+    private outgoingPayloads: Payload[] = [];
+    private outgoingMessages: Message[] = [];
+    private outgoingImmediate: any = null;
 
     public static toError(value: any) {
         if (value == null) {
@@ -127,6 +130,8 @@ export class Runtime extends RuntimeSession {
             }
         });
         this.connection.open();
+        this.onStartup.next();
+        this.onStartup.complete();
     }
 
     /*isConnected() {
@@ -205,89 +210,77 @@ export class Runtime extends RuntimeSession {
 
     sendObjectChangesToRuntime(federationId: string, objectId: {$id: string}, className: string, change: number,
                                propertyName: string, value: Value) {
-        if (this.connection) {
-            const p: {[name: string]: { v: Value, t: number} } = {};
-            if (propertyName != null) {
-                p[propertyName] = { v: value, t: 0 };
-            }
-            this.enqueueOrSendOutgoingPayload({
-                m: PacketType.Messages,
-                mm: [{
-                    m: MessageType.ObjectChanges,
-                    x: federationId,
-                    i: objectId,
-                    c: className,
-                    t: change,
-                    p
-                }]
-            });
-        } else if (this.onError) {
-            this.onError(new Error(`sendObjectChangesToRemote(${className}): no connection`));
+        const p: {[name: string]: { v: Value, t: number} } = {};
+        if (propertyName != null) {
+            p[propertyName] = { v: value, t: 0 };
         }
+        this.enqueueOrSendOutgoingPayload({
+            m: PacketType.Messages,
+            mm: [{
+                m: MessageType.ObjectChanges,
+                x: federationId,
+                i: objectId,
+                c: className,
+                t: change,
+                p
+            }]
+        });
     }
 
     sendEventNotificationToRuntime(federationId: string, eventName: string, value: Value) {
-        if (this.connection) {
-            this.enqueueOrSendOutgoingPayload({
-                m: PacketType.Messages,
-                mm: [{
-                    m: MessageType.EventDispatch,
-                    x: federationId,
-                    e: eventName,
-                    v: value
-                }]
-            });
-        } else if (this.onError) {
-            this.onError(new Error(`sendEventToRemote(${eventName}): no connection`));
-        }
+        this.enqueueOrSendOutgoingPayload({
+            m: PacketType.Messages,
+            mm: [{
+                m: MessageType.EventDispatch,
+                x: federationId,
+                e: eventName,
+                v: value
+            }]
+        });
     }
 
     sendServiceRequestToRuntime(federationId: string, service: string, value: Value): Promise<any> {
         const requestId = ++this.lastServiceRequestId;
         return new Promise((resolve, reject) => {
-            if (this.connection) {
-                this.serviceRequests[requestId] = {
-                    federationId,
-                    resolve,
-                    reject
-                };
-                try {
-                    this.enqueueOrSendOutgoingPayload({
-                        m: PacketType.Messages,
-                        mm: [{
-                            m: MessageType.ServiceRequest,
-                            x: federationId,
-                            s: service,
-                            r: requestId,
-                            v: value
-                        }]
-                    });
-                } catch (error) {
-                    delete this.serviceRequests[requestId];
-                    reject(error);
-                }
-            } else {
-                const message = `sendServiceRequestToRemote(${service}): no connection`;
-                if (this.onError) {
-                    this.onError(new Error(message));
-                }
-                reject(message);
+            this.serviceRequests[requestId] = {
+                federationId,
+                resolve,
+                reject
+            };
+            try {
+                this.enqueueOrSendOutgoingPayload({
+                    m: PacketType.Messages,
+                    mm: [{
+                        m: MessageType.ServiceRequest,
+                        x: federationId,
+                        s: service,
+                        r: requestId,
+                        v: value
+                    }]
+                });
+            } catch (error) {
+                delete this.serviceRequests[requestId];
+                reject(error);
             }
         });
     }
 
     private enqueueOrSendOutgoingPayload(payload: Payload): void {
         if (this.connection) {
+            if (this.outgoingPayloads) {
+                for (const outgoingPayload of this.outgoingPayloads) {
+                    this.connection.sendPacket(outgoingPayload );
+                }
+                this.outgoingPayloads = null;
+            }
             if (payload.m === PacketType.Messages) {
                 this.enqueueOutgoingMessages(payload.mm);
             } else {
                 this.flushOutgoingMessages();
                 this.connection.sendPacket(payload);
             }
-        } else if (this.onError) {
-            this.onError(new Error('sendPacket: no connection'));
         } else {
-            console.error('sendPacket: no connection');
+            this.outgoingPayloads.push(payload);
         }
     }
 
