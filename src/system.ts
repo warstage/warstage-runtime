@@ -11,4 +11,5 @@ export interface Player extends ObjectRef {
 
 export interface Launcher extends ObjectRef {
     lobbyId: string;
+    matchId: string;
 }
