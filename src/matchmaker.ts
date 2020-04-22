@@ -3,6 +3,10 @@
 
 import {ObjectRef} from './object';
 
+export interface Module extends ObjectRef {
+    moduleUrl: string;
+}
+
 export interface Session extends ObjectRef {
     playerId: string;
     playerName: string;
