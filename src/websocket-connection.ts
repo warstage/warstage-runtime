@@ -125,7 +125,9 @@ export class WebSocketConnection implements RuntimeConnection {
 
     close() {
         this.isOpen = false;
-        this.webSocket.close();
+        if (this.webSocket) {
+            this.webSocket.close();
+        }
         if (this.reopener) {
             clearInterval(this.reopener);
             this.reopener = null;
