@@ -5,6 +5,8 @@ import {ObjectRef} from './object';
 
 export interface Module extends ObjectRef {
     moduleUrl: string;
+    ownerId: string;
+    online: boolean;
 }
 
 export interface Session extends ObjectRef {
@@ -17,6 +19,7 @@ export interface Session extends ObjectRef {
 }
 
 export interface Match extends ObjectRef {
+    online: boolean;
     hostingPlayerId: string;
     teams: Team[];
     teamsMin: number;

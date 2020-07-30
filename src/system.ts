@@ -9,7 +9,12 @@ export interface Player extends ObjectRef {
     playerIcon: string;
 }
 
-export interface Launcher extends ObjectRef {
+export interface LauncherState  {
     lobbyId: string;
     matchId: string;
+    allowCreateMatch: boolean;
+    allowHostMatch: boolean;
+}
+
+export interface Launcher extends LauncherState, ObjectRef {
 }
