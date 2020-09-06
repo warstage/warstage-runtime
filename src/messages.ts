@@ -7,7 +7,7 @@ export enum ProcessType {
     Player = 3,
     Server = 4,
     Master = 5,
-    Launcher = 6
+    Module = 6
 }
 
 export enum PacketType {
