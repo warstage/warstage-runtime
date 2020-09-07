@@ -52,7 +52,7 @@ export interface AuthenticatePayload {
     i: string; // image url
 }
 
-export interface MessagesPayloads {
+export interface MessagesPayload {
     m: PacketType.Messages;
     mm: Message[];
 }
@@ -72,7 +72,7 @@ export interface FederationRemovedPayload {
 export type Payload = HeartbeatPayload
     | HandshakePayload
     | AuthenticatePayload
-    | MessagesPayloads
+    | MessagesPayload
     | FederationAddedPayload
     | FederationRemovedPayload;
 

@@ -34,7 +34,7 @@ export class Runtime extends RuntimeSession {
     public onStartup = new Subject();
     public onError: (message: Error) => void = null;
 
-    public connection: RuntimeConnection;
+    public connection: RuntimeConnection = null;
     private connectionIsOpen  = false;
     private serviceRequests: {
         [requestId: number]: { federationId: string, resolve: (x: Value) => void, reject: (x: Value | Error) => void }
@@ -92,6 +92,8 @@ export class Runtime extends RuntimeSession {
         this.connection = this.configuration.newConnection();
         this.connection.onOpen(() => {
             this.connectionIsOpen = true;
+            const outgoingPayloads = this.outgoingPayloads;
+            this.outgoingPayloads = null;
             this.enqueueOrSendOutgoingPayload({
                 m: PacketType.Handshake,
                 id: this.configuration.processId,
@@ -116,6 +118,7 @@ export class Runtime extends RuntimeSession {
                 }
             }
             this.trySendAuthenticateMessage();
+            this.outgoingPayloads = outgoingPayloads;
         });
         this.connection.onClose(() => {
             this.connectionIsOpen = false;
@@ -266,7 +269,7 @@ export class Runtime extends RuntimeSession {
     }
 
     private enqueueOrSendOutgoingPayload(payload: Payload): void {
-        if (this.connection) {
+        if (this.connectionIsOpen) {
             if (this.outgoingPayloads) {
                 for (const outgoingPayload of this.outgoingPayloads) {
                     this.connection.sendPacket(outgoingPayload );
