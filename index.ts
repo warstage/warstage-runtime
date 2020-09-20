@@ -3,6 +3,7 @@ export * from './src/compressor';
 export * from './src/decompressor';
 export * from './src/embedded-connection';
 export * from './src/federation';
+export * from './src/input-device-poster';
 export * from './src/matchmaker';
 export * from './src/messages';
 export * from './src/object';
