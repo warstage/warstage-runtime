@@ -14,6 +14,12 @@ export class RuntimeConfiguration {
     processId: string;
     subjectId: string;
 
+    static autoRedirect() {
+        if (window === window.parent) {
+            window.location.href = 'https://warstage.net/200915.1827/index.html?module=' + encodeURI(window.location.toString());
+        }
+    }
+
     static autoDetect(): RuntimeConfiguration {
         const result = new RuntimeConfiguration();
         const params = new URLSearchParams(document.location.search.substring(1));
