@@ -64,6 +64,7 @@ export class EmbeddedConnection implements RuntimeConnection {
                 }
             };
             window.addEventListener('message', this.messageListener);
+            this.startSendOpen();
         } else {
             console.warn('EmbeddedConnection.open(): session is already opened');
         }
