@@ -13,6 +13,7 @@ export class EmbeddedConnection implements RuntimeConnection {
     private messageListener: (event: MessageEvent) => void;
     private compressor: Compressor = null;
     private decompressor: Decompressor = null;
+    private openerInterval: any = null;
 
     constructor() {
         if (!window.parent) {
@@ -48,10 +49,12 @@ export class EmbeddedConnection implements RuntimeConnection {
                             console.error('EmbeddedConnection: missing onPacket callback');
                         }
                     } else if (event.data.open) {
+                        this.stopSendOpen();
                         if (this.onOpenCallback) {
                             this.onOpenCallback();
                         }
                     } else if (event.data.close) {
+                        this.stopSendOpen();
                         window.removeEventListener('message', this.messageListener);
                         this.messageListener = null;
                         if (this.onCloseCallback) {
@@ -61,13 +64,13 @@ export class EmbeddedConnection implements RuntimeConnection {
                 }
             };
             window.addEventListener('message', this.messageListener);
-            window.parent.postMessage({ open: true }, '*');
         } else {
             console.warn('EmbeddedConnection.open(): session is already opened');
         }
     }
 
     close() {
+        this.stopSendOpen();
         if (this.messageListener) {
             window.parent.postMessage({ close: true }, '*');
         } else {
@@ -77,5 +80,21 @@ export class EmbeddedConnection implements RuntimeConnection {
 
     sendPacket(payload: Payload) {
         window.parent.postMessage({ packet: this.compressor.encode(payload) }, '*');
+    }
+
+    private startSendOpen() {
+        window.parent.postMessage({open: true}, '*');
+        this.openerInterval = setInterval(() => {
+            if (this.openerInterval) {
+                window.parent.postMessage({open: true}, '*');
+            }
+        }, 200);
+    }
+
+    private stopSendOpen() {
+        if (this.openerInterval) {
+            clearInterval(this.openerInterval);
+            this.openerInterval = null;
+        }
     }
 }
