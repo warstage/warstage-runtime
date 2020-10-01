@@ -7,6 +7,7 @@ import {Compressor} from './compressor';
 import {Decompressor} from './decompressor';
 
 export class EmbeddedConnection implements RuntimeConnection {
+    private targetOrigin = '*';
     private onOpenCallback: () => void = null;
     private onCloseCallback: () => void = null;
     private onPacketCallback: (payload: Payload) => void = null;
@@ -14,6 +15,10 @@ export class EmbeddedConnection implements RuntimeConnection {
     private compressor: Compressor = null;
     private decompressor: Decompressor = null;
     private openerInterval: any = null;
+
+    private sendMessage(message: any) {
+        window.parent.postMessage(message, this.targetOrigin);
+    }
 
     constructor() {
         if (!window.parent) {
@@ -54,18 +59,12 @@ export class EmbeddedConnection implements RuntimeConnection {
     }
 
     sendPacket(payload: Payload) {
-        this.sendMessage({ packet: this.compressor.encode(payload) });
-    }
-
-    private sendMessage(message: any) {
-        console.log('embedded send ' + JSON.stringify(message));
-        window.parent.postMessage(message, '*');
+       this.sendMessage({ packet: this.compressor.encode(payload) });
     }
 
     private addMessageListener() {
         this.messageListener = event => {
             if (event.source === window.parent) {
-                console.log('embedded onmessage ' + JSON.stringify(event.data));
                 if (event.data.packet) {
                     if (this.onPacketCallback) {
                         const arrayBuffer = event.data.packet;
@@ -101,7 +100,7 @@ export class EmbeddedConnection implements RuntimeConnection {
         this.sendMessage({ open: true });
         this.openerInterval = setInterval(() => {
             if (this.openerInterval) {
-                this.sendMessage({ open: true });
+               this.sendMessage({ open: true });
             }
         }, 200);
     }
