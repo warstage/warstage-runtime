@@ -12,6 +12,7 @@ export * from './src/runtime';
 export * from './src/runtime-configuration';
 export * from './src/runtime-connection';
 export * from './src/runtime-session';
+export * from './src/samurai';
 export * from './src/scenario';
 export * from './src/scenario-runner';
 export * from './src/system';

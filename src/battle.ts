@@ -2,6 +2,7 @@
 // Licensed under GNU General Public License version 3 or later.
 
 import { ObjectRef } from './object';
+import { UnitStats } from './samurai'
 
 
 export interface Alliance extends ObjectRef {
@@ -18,10 +19,10 @@ export interface Commander extends ObjectRef {
 export interface Unit extends ObjectRef {
     commander: ObjectRef;
     alliance: ObjectRef;
-    stats: {
-        unitClass: string;
-        fighterCount: number;
-    };
+    'stats.unitClass'?: string;
+    'stats.unitStats'?: UnitStats;
+    'stats.fighterCount'?: number;
+    'stats.canNotRally'?: boolean;
     fighters: vec2[];
     placement: { x: number, y: number, z: number };
     center?: { x: number, y: number };
