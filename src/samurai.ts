@@ -42,7 +42,6 @@ export interface UnitStats extends ValueStruct {
     quality?: {
         trainingLevel?: number; // 0.0 - 1.0
     };
-    platformType?: PlatformType;
     walkingSpeed?: number; // meters per second
     runningSpeed?: number; // meters per second
     routingSpeed?: number; // meters per second
@@ -88,7 +87,7 @@ export function getSamuraiWeapon(unitClass: string): SamuraiWeapon {
     return SamuraiWeapon.Yari;
 }
 
-export function getUnitClass(platform: SamuraiPlatform , weapon: SamuraiWeapon) {
+export function getUnitClass(platform: SamuraiPlatform , weapon: SamuraiWeapon): string {
     let result = '';
     switch (platform) {
         case SamuraiPlatform.Cavalry: result += 'CAV'; break;
@@ -107,7 +106,7 @@ export function getUnitClass(platform: SamuraiPlatform , weapon: SamuraiWeapon) 
     return result;
 }
 
-export function getDefaultUnitSize(platform: SamuraiPlatform , weapon: SamuraiWeapon) {
+export function getDefaultUnitSize(platform: SamuraiPlatform , weapon: SamuraiWeapon): number {
     if (weapon === SamuraiWeapon.Cannon) {
         return 12;
     }
