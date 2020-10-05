@@ -4,20 +4,20 @@
 import {ValueStruct} from './object';
 import {vec2} from './battle';
 
-export enum SamuraiWeapon {
-    Yari = 'YARI',
-    Katana = 'KATA',
-    Naginata = 'NAGI',
-    Bow = 'BOW',
-    Arq = 'ARQ',
-    Cannon = 'CAN'
+export enum SamuraiPlatform {
+    Cavalry = 0, // CAV
+    General = 1, // GEN
+    Ashigaru = 2, // ASH
+    Samurai = 3 // SAM
 }
 
-export enum SamuraiPlatform {
-    Ashigaru = 'ASH',
-    Samurai = 'SAM',
-    Cavalry = 'CAV',
-    General = 'GEN'
+export enum SamuraiWeapon {
+    Yari = 0, // YARI
+    Katana = 1, // KATA
+    Naginata = 2, // NAGI
+    Bow = 3, // BOW
+    Arq = 4, // ARQ
+    Cannon = 5 // CAN
 }
 
 export enum MissileType { None = 0, Bow = 1, Arq = 2, Cannon = 3 }
