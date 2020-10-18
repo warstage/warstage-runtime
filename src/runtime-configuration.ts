@@ -16,7 +16,7 @@ export class RuntimeConfiguration {
 
     static autoRedirect() {
         if (window === window.parent) {
-            window.location.href = 'https://warstage.net/index.html?module=' + encodeURI(window.location.toString());
+            window.location.href = 'https://warstage.net/index.html#' + window.location.toString();
         }
     }
 
