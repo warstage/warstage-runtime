@@ -7,7 +7,7 @@ import {Federation} from './federation';
 export interface Scenario {
     getParams(): Value;
 
-    startup(playerId: string, match: ObjectRef, lobbyFederation: Federation, battleFederation: Federation);
+    startup(match: ObjectRef, lobbyFederation: Federation, battleFederation: Federation);
 
     shutdown();
 }

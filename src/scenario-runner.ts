@@ -21,7 +21,7 @@ export class ScenarioRunner {
     scenario: Scenario = null;
     inputDevicePoster: InputDevicePoster = null;
 
-    constructor(private scenarioFactory: () => Scenario) {
+    constructor(private scenarioFactory: (playerId: string) => Scenario) {
         this.runtime = new Runtime();
         this.runtime.startup(RuntimeConfiguration.autoDetect());
         this.systemFederation = this.runtime.joinFederation('000000000000000000000000');
@@ -91,7 +91,7 @@ export class ScenarioRunner {
 
     private tryStartScenario() {
         if (this.module && this.player && this.module.ownerId === this.player.playerId && !this.scenario) {
-            this.startScenario(this.scenarioFactory()).then(() => {
+            this.startScenario(this.scenarioFactory(this.player.playerId)).then(() => {
             }, reason => {
                 console.error(reason);
             });
@@ -120,7 +120,7 @@ export class ScenarioRunner {
             this.scenario = scenario;
             this.battleFederation = this.runtime.joinFederation(matchId);
             await this.pingBattleServices(this.battleFederation);
-            scenario.startup(this.player.playerId, match, this.lobbyFederation, this.battleFederation);
+            scenario.startup(match, this.lobbyFederation, this.battleFederation);
         } catch (err) {
             console.error(err);
         }
