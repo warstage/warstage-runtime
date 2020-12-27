@@ -1,9 +1,213 @@
 // Copyright Felix Ungman. All rights reserved.
 // Licensed under GNU General Public License version 3 or later.
 
-import { ObjectRef } from './object';
-import { UnitStats } from './samurai'
+import {ObjectRef, Value, ValueStruct} from './object';
+import {vec2, vec3, vec4} from './vector';
 
+export enum FormationType {
+    Column = 'COLUMN',
+    Line = 'LINE',
+    Skirmish = 'SKIRMISH',
+    Square = 'SQUARE',
+    Wedge = 'WEDGE'
+}
+
+export interface FormationBase extends ValueStruct {
+    name: string;
+    spacing: {
+        frontal: number;
+        lateral: number;
+    };
+    /* placement?: {[subunitId: string]: { front: number; right: number; }}; */
+}
+
+export interface ColumnFormation extends FormationBase {
+    type: FormationType.Column;
+    files: number;
+}
+
+export interface LineFormation extends FormationBase {
+    type: FormationType.Line;
+    ranks: number;
+}
+
+export interface SkirmishFormation extends FormationBase {
+    type: FormationType.Skirmish;
+}
+
+export interface SquareFormation extends FormationBase {
+    type: FormationType.Square;
+    ranks: number;
+}
+
+export interface WedgeFormation extends FormationBase {
+    type: FormationType.Wedge;
+    ranks: number;
+}
+
+export type Formation = ColumnFormation
+    | LineFormation
+    | SkirmishFormation
+    | SquareFormation
+    | WedgeFormation;
+
+/***/
+
+export interface UnitType extends ValueStruct {
+    subunits: Subunit[];
+    formations: Formation[];
+    training: number;
+    /* leadership: number; */
+    /* fanaticism: number; */
+    speed: number[]
+}
+
+export interface Subunit extends ValueStruct {
+    /* id: string; */
+    element: ElementType;
+    individuals: number;
+    weapons: WeaponType[];
+    /* vehicle: VehicleType[]; */
+}
+
+export interface ElementType extends ValueStruct {
+    /* name: string; */
+    size: vec3;
+    shape: string;
+    movement: MovementType;
+    /* armour: ArmourType | ArmourType[]; */
+}
+
+export interface MovementType extends ValueStruct {
+    propulsion: PropulsionType;
+    speed: { normal: number; slow?: number; fast?: number; };
+    groundPressure: number;
+}
+
+export enum PropulsionType {
+    Biped = 'BIPED',
+    Quadruped = 'QUADRUPED',
+    Bicycle = 'BICYCLE',
+    Dicycle = 'DICYCLE',
+    Wheels = 'WHEELS',
+    Tracks = 'TRACKS',
+    HalfTrack = 'HALFTRACK'
+}
+
+export interface ArmourType extends ValueStruct {
+    area: number;
+    thickness: number;
+    resistance: number;
+    quality: number;
+}
+
+/***/
+
+export interface WeaponType extends ValueStruct {
+    id?: string;
+    element?: ElementType;
+    crew?: number;
+    vehicle?: VehicleType;
+    melee?: MeleeType;
+    missiles?: MissileType[];
+    shape?: string;
+}
+
+export interface MeleeType extends ValueStruct {
+    reach: number /* | {
+        min: number;
+        max: number;
+    } */ ;
+    time: {
+        ready: number;
+        strike: number;
+        /* parry: number; */
+    }
+    /* pressure: {
+        pointed?: number;
+        edged?: number;
+        blunt?: number;
+    }; */
+}
+
+export enum ProjectileType { None = 0, Arrow = 1, Bullet = 2, Cannonball = 3 }
+
+export interface MissileType extends ValueStruct {
+    range: {
+        min: number; // meters
+        max: number; // meters
+    };
+    indirect?: boolean;
+    initialSpeed: number; // meters per second
+    /* dragCoefficient: number; */
+    hitRadius: number; // meters
+    time: {
+        aim: number; // seconds
+        release: number; // seconds
+        reload: number; // seconds
+    };
+    /* roundsPerReload: number; */
+    /* roundsPerWeapon: number; */
+    projectileType: ProjectileType;
+    projectileShape: string;
+    releaseShape?: string;
+    impactShape?: string;
+}
+
+export interface VehicleType extends ValueStruct {
+    element: ElementType;
+    crew: number;
+    weapons: WeaponType[];
+    passengers: number;
+    shape: string;
+}
+
+/***/
+
+export interface Color extends ValueStruct {
+    r: number;
+    g: number;
+    b: number;
+    a: number;
+}
+
+export interface Line extends ValueStruct {
+    deltas: number[];
+    colors: Color[];
+}
+
+export interface LoopType extends ValueStruct {
+    friendly?: boolean;
+    hostile?: boolean;
+    dead?: boolean;
+}
+
+export interface Loop extends ValueStruct {
+    type?: LoopType;
+    texture: string;
+    angles?: number[];
+    vertices: number[];
+}
+
+export enum SkinType {
+    Billboard = 'BILLBOARD'
+}
+
+export interface Skin extends ValueStruct {
+    type: SkinType;
+    loops: Loop[];
+}
+
+export interface Shape {
+    name: string;
+    size: vec3;
+    skins?: Skin[];
+    lines?: Line[];
+}
+
+export interface ShapeRef extends Shape, ObjectRef {}
+
+/***/
 
 export interface Alliance extends ObjectRef {
     teamId?: string;
@@ -19,8 +223,9 @@ export interface Commander extends ObjectRef {
 export interface Unit extends ObjectRef {
     commander: ObjectRef;
     alliance: ObjectRef;
+    unitType: UnitType;
     'stats.unitClass'?: string;
-    'stats.unitStats'?: UnitStats;
+    'stats.unitStats'?: Value;
     'stats.fighterCount'?: number;
     'stats.canNotRally'?: boolean;
     fighters: vec2[];
@@ -54,53 +259,3 @@ export interface TeamKills extends ObjectRef {
     kills: number;
 }
 
-// tslint:disable-next-line:class-name
-export class vec2 {
-    x: number;
-    y: number;
-
-    /*constructor(x: number, y: number) {
-        this.x = x;
-        this.y = y;
-    }*/
-
-    static add(v1: vec2, v2: vec2): vec2 {
-        return {x: v1.x + v2.x, y: v1.y + v2.y};
-    }
-
-    static sub(v1: vec2, v2: vec2): vec2 {
-        return {x: v1.x - v2.x, y: v1.y - v2.y};
-    }
-
-    static mul(v: vec2, k: number): vec2 {
-        return {x: v.x * k, y: v.y * k};
-    }
-
-    static distanceSquared(v1: vec2, v2: vec2) {
-        const dx = v2.x - v1.x;
-        const dy = v2.y - v1.y;
-        return dx * dx + dy * dy;
-    }
-
-    static distance(v1: vec2, v2: vec2) {
-        return Math.sqrt(vec2.distanceSquared(v1, v2));
-    }
-
-    static normSquared(v: vec2): number {
-        return v.x * v.x + v.y * v.y;
-    }
-
-    static norm(v: vec2): number {
-        return Math.sqrt(vec2.normSquared(v));
-    }
-
-    static rotate(v: vec2, a: number): vec2 {
-        const n = vec2.norm(v);
-        a += vec2.angle(v);
-        return { x: n * Math.cos(a), y: n * Math.sin(a) };
-    }
-
-    static angle(v: vec2) {
-        return Math.atan2(v.y, v.x);
-    }
-}

@@ -10,7 +10,9 @@ export interface ValueStruct { [key: string]: Value; }
 export type Value = undefined | null | boolean | number | string
     | Uint8Array | ObjectRef | ValueArray | ValueStruct
     |  { x: number; y: number }
-    |  { x: number; y: number; z: number };
+    |  { x: number; y: number; z: number }
+    |  { x: number, y: number; z: number; w: number }
+
 
 export function defineObjectProperty(federation: Federation, object: ObjectRef, propertyName: string) {
     if (!getOwnPropertyDescriptor(object, propertyName)) {
