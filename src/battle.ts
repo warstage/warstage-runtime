@@ -207,6 +207,35 @@ export interface Shape {
 
 export interface ShapeRef extends Shape, ObjectRef {}
 
+
+export interface Marker extends ValueStruct {
+    texture: string;
+    layers: MarkerLayer[];
+}
+
+export enum MarkerColor {
+    Alliance = 'ALLIANCE',
+    Commander = 'COMMANDER'
+}
+
+export interface MarkerLayer extends ValueStruct {
+    texCoords: vec2;
+    texSize: vec2;
+    color?: MarkerColor | null;
+    state: {
+        allied?: boolean | null,
+        command?: boolean | null,
+        dragged?: boolean | null,
+        friendly?: boolean | null,
+        hovered?: boolean | null
+        hostile?: boolean | null,
+        routed?: boolean | null,
+        selected?: boolean | null,
+    }
+}
+
+
+
 /***/
 
 export interface Alliance extends ObjectRef {
@@ -224,6 +253,7 @@ export interface Unit extends ObjectRef {
     commander: ObjectRef;
     alliance: ObjectRef;
     unitType: UnitType;
+    marker: Marker;
     'stats.unitClass'?: string;
     'stats.unitStats'?: Value;
     'stats.fighterCount'?: number;
@@ -239,6 +269,7 @@ export interface DeploymentUnit extends ObjectRef {
     hostingPlayerId: string;
     alliance: Alliance;
     commander: Commander;
+    marker: Marker;
     position: vec2;
     path: vec2[];
     platform: number;
