@@ -14,11 +14,8 @@ export enum FormationType {
 
 export interface FormationBase extends ValueStruct {
     name: string;
-    spacing: {
-        frontal: number;
-        lateral: number;
-    };
-    /* placement?: {[subunitId: string]: { front: number; right: number; }}; */
+    spacing: [number, number]; // lateral, frontal
+    /* placement?: {[subunitId: string]: [number, number]}; // right, front */
 }
 
 export interface ColumnFormation extends FormationBase {
@@ -72,7 +69,7 @@ export interface Subunit extends ValueStruct {
 
 export interface ElementType extends ValueStruct {
     /* name: string; */
-    size: vec3;
+    size: [number, number, number]; // width, height, depth
     shape: string;
     movement: MovementType;
     /* armour: ArmourType | ArmourType[]; */
@@ -114,10 +111,7 @@ export interface WeaponType extends ValueStruct {
 }
 
 export interface MeleeType extends ValueStruct {
-    reach: number /* | {
-        min: number;
-        max: number;
-    } */ ;
+    reach: number /* | [number, number] */ ;
     time: {
         ready: number;
         strike: number;
@@ -133,10 +127,7 @@ export interface MeleeType extends ValueStruct {
 export enum ProjectileType { None = 0, Arrow = 1, Bullet = 2, Cannonball = 3 }
 
 export interface MissileType extends ValueStruct {
-    range: {
-        min: number; // meters
-        max: number; // meters
-    };
+    range: [number, number];
     indirect?: boolean;
     initialSpeed: number; // meters per second
     /* dragCoefficient: number; */
@@ -164,16 +155,9 @@ export interface VehicleType extends ValueStruct {
 
 /***/
 
-export interface Color extends ValueStruct {
-    r: number;
-    g: number;
-    b: number;
-    a: number;
-}
-
 export interface Line extends ValueStruct {
     deltas: number[];
-    colors: Color[];
+    colors: [number, number, number, number][];
 }
 
 export interface LoopType extends ValueStruct {
@@ -185,6 +169,7 @@ export interface LoopType extends ValueStruct {
 export interface Loop extends ValueStruct {
     type?: LoopType;
     texture: string;
+    texgrid?: number;
     angles?: number[];
     vertices: number[];
 }
@@ -200,7 +185,7 @@ export interface Skin extends ValueStruct {
 
 export interface Shape {
     name: string;
-    size: vec3;
+    size: [number, number, number];
     skins?: Skin[];
     lines?: Line[];
 }
@@ -210,6 +195,7 @@ export interface ShapeRef extends Shape, ObjectRef {}
 
 export interface Marker extends ValueStruct {
     texture: string;
+    texgrid?: number;
     layers: MarkerLayer[];
 }
 
@@ -219,8 +205,7 @@ export enum MarkerColor {
 }
 
 export interface MarkerLayer extends ValueStruct {
-    texCoords: vec2;
-    texSize: vec2;
+    vertices: [[number, number], [number, number]]; // u1, v1, u2, v2
     color?: MarkerColor | null;
     state: {
         allied?: boolean | null,
