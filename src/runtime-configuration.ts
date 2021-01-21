@@ -14,10 +14,12 @@ export class RuntimeConfiguration {
     processId: string;
     subjectId: string;
 
-    static autoRedirect() {
+    static tryAutoRedirect(): boolean {
         if (window === window.parent) {
             window.location.href = 'https://warstage.net/index.html#' + window.location.toString();
+            return true;
         }
+        return false;
     }
 
     static autoDetect(): RuntimeConfiguration {
