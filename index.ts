@@ -1,3 +1,4 @@
+export * from './src/asset-loader';
 export * from './src/battle';
 export * from './src/compressor';
 export * from './src/decompressor';
