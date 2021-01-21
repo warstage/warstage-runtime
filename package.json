@@ -1,6 +1,6 @@
 {
   "name": "warstage-runtime",
-  "version": "0.1.22",
+  "version": "0.2.0",
   "description": "An API for writing bots and mods for the Warstage war-gaming platform",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -10,14 +10,14 @@
     "rxjs-compat": "~6.6.3"
   },
   "devDependencies": {
-    "@types/jasmine": "~3.6.2",
-    "@types/node": "~14.14.16",
+    "@types/jasmine": "~3.6.3",
+    "@types/node": "~14.14.22",
     "karma": "~5.2.3",
     "karma-chrome-launcher": "~3.1.0",
     "karma-coverage-istanbul-reporter": "~3.0.3",
     "karma-jasmine": "~4.0.1",
     "karma-jasmine-html-reporter": "~1.5.4",
-    "karma-typescript": "~4.1.1",
+    "karma-typescript": "~5.2.0",
     "tslint": "~6.1.3",
     "typescript": "~4.0.5"
   },
