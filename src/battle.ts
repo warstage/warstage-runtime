@@ -124,9 +124,8 @@ export interface MeleeType extends ValueStruct {
     }; */
 }
 
-export enum ProjectileType { None = 0, Arrow = 1, Bullet = 2, Cannonball = 3 }
-
 export interface MissileType extends ValueStruct {
+    id?: number;
     range: [number, number];
     indirect?: boolean;
     initialSpeed: number; // meters per second
@@ -139,8 +138,7 @@ export interface MissileType extends ValueStruct {
     };
     /* roundsPerReload: number; */
     /* roundsPerWeapon: number; */
-    projectileType: ProjectileType;
-    projectileShape: string;
+    trajectoryShape?: string;
     releaseShape?: string;
     impactShape?: string;
 }
