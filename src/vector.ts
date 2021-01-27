@@ -21,15 +21,14 @@ export function add<T extends vec | vec2 | vec3 | vec4>(v1: T, v2: T | number): 
     v1 = upgrade(v1);
     v2 = upgrade(v2);
     const result = [];
+    const n = v1.length;
     if (typeof v2 === 'number') {
-        const n = v1.length;
         for (let i = 0; i !== n; ++i) {
             result.push(v1[i] + v2);
         }
     } else {
-        const n = Math.max(v1.length, v2.length);
         for (let i = 0; i !== n; ++i) {
-            result.push((v1[i] || 0) + (v2[i] || 0))
+            result.push(v1[i] + v2[i])
         }
     }
     return result as T;
@@ -39,15 +38,14 @@ export function sub<T extends vec | vec2 | vec3 | vec4>(v1: T, v2: T | number): 
     v1 = upgrade(v1);
     v2 = upgrade(v2);
     const result = [];
+    const n = v1.length;
     if (typeof v2 === 'number') {
-        const n = v1.length;
         for (let i = 0; i !== n; ++i) {
             result.push(v1[i] - v2);
         }
     } else {
-        const n = Math.max(v1.length, v2.length);
         for (let i = 0; i !== n; ++i) {
-            result.push((v1[i] || 0) - (v2[i] || 0))
+            result.push(v1[i] - v2[i])
         }
     }
     return result as T;
@@ -57,15 +55,14 @@ export function mul<T extends vec | vec2 | vec3 | vec4>(v1: T, v2: T | number): 
     v1 = upgrade(v1);
     v2 = upgrade(v2);
     const result = [];
+    const n = v1.length;
     if (typeof v2 === 'number') {
-        const n = v1.length;
         for (let i = 0; i !== n; ++i) {
             result.push(v1[i] * v2);
         }
     } else {
-        const n = Math.max(v1.length, v2.length);
         for (let i = 0; i !== n; ++i) {
-            result.push((v1[i] || 0) * (v2[i] || 0))
+            result.push(v1[i] * v2[i])
         }
     }
     return result as T;
@@ -75,15 +72,14 @@ export function div<T extends vec | vec2 | vec3 | vec4>(v1: T, v2: T | number): 
     v1 = upgrade(v1);
     v2 = upgrade(v2);
     const result = [];
+    const n = v1.length;
     if (typeof v2 === 'number') {
-        const n = v1.length;
         for (let i = 0; i !== n; ++i) {
             result.push(v1[i] / v2);
         }
     } else {
-        const n = Math.max(v1.length, v2.length);
         for (let i = 0; i !== n; ++i) {
-            result.push((v1[i] || 0) / (v2[i] || 1))
+            result.push(v1[i] / v2[i])
         }
     }
     return result as T;
@@ -92,9 +88,12 @@ export function div<T extends vec | vec2 | vec3 | vec4>(v1: T, v2: T | number): 
 export function equal<T extends vec | vec2 | vec3 | vec4>(v1: T, v2: T): boolean {
     v1 = upgrade(v1);
     v2 = upgrade(v2);
-    const n = Math.max(v1.length, v2.length);
+    const n = v1.length;
+    if (v2.length !== n) {
+        return false;
+    }
     for (let i = 0; i !== n; ++i) {
-        if ((v1[i] || 0) !== (v2[i] || 0)) {
+        if (v1[i] !== v2[i]) {
             return false;
         }
     }
@@ -109,9 +108,9 @@ export function dot<T extends vec | vec2 | vec3 | vec4>(v1: T, v2: T): number {
     v1 = upgrade(v1);
     v2 = upgrade(v2);
     let result = 0;
-    const n = Math.max(v1.length, v2.length);
+    const n = v1.length;
     for (let i = 0; i !== n; ++i) {
-        result += (v1[i] || 0) * (v2[i] || 0);
+        result += v1[i] * v2[i];
     }
     return result;
 }
@@ -132,7 +131,26 @@ function getLength<T extends vec | vec2 | vec3 | vec4>(v: T): number {
 export { getLength as length };
 
 export function length2<T extends vec | vec2 | vec3 | vec4>(v: T): number {
-    return dot(v, v);
+    v = upgrade(v);
+    let result = 0;
+    const n = v.length;
+    for (let i = 0; i !== n; ++i) {
+        result += v[i] * v[i];
+    }
+    return result;
+}
+
+function makeDefaultNormal(n: number): number[] {
+    const result = [];
+    for (let i = 0; i !== n; ++i) {
+        result.push(i === 0 ? 1 : 0);
+    }
+    return result;
+}
+
+export function normalize<T extends vec | vec2 | vec3 | vec4>(v: T): T {
+    const length = getLength(v);
+    return length > 0.000001  ? div(v, length) : makeDefaultNormal(upgrade(v).length) as T;
 }
 
 export function distance<T extends vec | vec2 | vec3 | vec4>(v1: T, v2: T): number {
