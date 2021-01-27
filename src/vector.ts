@@ -156,5 +156,5 @@ export function fromPolar(length: number, angle: number): vec2 {
 }
 
 export function rotate(v: vec2, angle: number): vec2 {
-    return fromPolar(getAngle(v) + angle, getLength(v));
+    return fromPolar(getLength(v), getAngle(v) + angle);
 }
