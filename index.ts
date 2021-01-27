@@ -15,5 +15,6 @@ export * from './src/runtime-configuration';
 export * from './src/runtime-connection';
 export * from './src/runtime-session';
 export * from './src/system';
-export * from './src/vector';
+export * as Vector from './src/vector';
+export {vec, vec2, vec3, vec4} from './src/vector';
 export * from './src/websocket-connection';

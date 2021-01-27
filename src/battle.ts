@@ -14,8 +14,8 @@ export enum FormationType {
 
 export interface FormationBase extends ValueStruct {
     name: string;
-    spacing: [number, number]; // lateral, frontal
-    /* placement?: {[subunitId: string]: [number, number]}; // right, front */
+    spacing: vec2; // lateral, frontal
+    /* placement?: {[subunitId: string]: vec2}; // right, front */
 }
 
 export interface ColumnFormation extends FormationBase {
@@ -69,7 +69,7 @@ export interface Subunit extends ValueStruct {
 
 export interface ElementType extends ValueStruct {
     /* name: string; */
-    size: [number, number, number]; // width, height, depth
+    size: vec3; // width, height, depth
     shape: string;
     movement: MovementType;
     /* armour: ArmourType | ArmourType[]; */
@@ -155,7 +155,7 @@ export interface VehicleType extends ValueStruct {
 
 export interface Line extends ValueStruct {
     deltas: number[];
-    colors: [number, number, number, number][];
+    colors: vec4[];
 }
 
 export interface LoopType extends ValueStruct {
@@ -183,7 +183,7 @@ export interface Skin extends ValueStruct {
 
 export interface Shape {
     name: string;
-    size: [number, number, number];
+    size: vec3;
     skins?: Skin[];
     lines?: Line[];
 }
@@ -203,7 +203,7 @@ export enum MarkerColor {
 }
 
 export interface MarkerLayer extends ValueStruct {
-    vertices: [[number, number], [number, number]]; // u1, v1, u2, v2
+    vertices: [vec2, vec2]; // u1, v1, u2, v2
     color?: MarkerColor | null;
     state: {
         allied?: boolean | null,
@@ -242,8 +242,8 @@ export interface Unit extends ObjectRef {
     'stats.fighterCount'?: number;
     'stats.canNotRally'?: boolean;
     fighters: vec2[];
-    placement: { x: number, y: number, z: number };
-    center?: { x: number, y: number };
+    placement: { x: number, y: number, z: number }; // ground-x, ground-y, facing
+    center?: vec2;
     routed?: boolean;
     deletedByGesture: boolean;
 }
