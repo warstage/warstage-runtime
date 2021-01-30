@@ -1,3 +1,6 @@
+// Copyright Felix Ungman. All rights reserved.
+// Licensed under GNU General Public License version 3 or later.
+
 export declare type vec = number[];
 export declare type vec2 = [number, number];
 export declare type vec3 = [number, number, number];
