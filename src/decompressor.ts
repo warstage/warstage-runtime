@@ -12,13 +12,18 @@ export class Decompressor {
     objectIds: {$id: string}[] = [];
 
     public decode(buffer: Buffer): object {
-        this.buffer = buffer;
-        this.index = 0;
+        try {
+            this.buffer = buffer;
+            this.index = 0;
 
-        const result = {};
-        while (this.decodeElement(result, null)) {
+            const result = {};
+            while (this.decodeElement(result, null)) {
+            }
+            return result;
+        } catch (e) {
+            console.error('decode: ' + buffer.toString('hex'));
+            throw e;
         }
-        return result;
     }
 
     private decodeElement(parentObject: object, parentArray: any[]): boolean {
