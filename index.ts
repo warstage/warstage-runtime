@@ -1,6 +1,7 @@
 export * from './src/asset-loader';
 export * from './src/battle';
 export * from './src/compressor';
+export * from './src/config-loader';
 export * from './src/decompressor';
 export * from './src/embedded-connection';
 export * from './src/federation';
