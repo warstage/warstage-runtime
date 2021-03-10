@@ -66,6 +66,9 @@ export class EmbeddedConnection implements RuntimeConnection {
         this.messageListener = event => {
             if (event.source === window.parent) {
                 if (event.data.packet) {
+                    if (this.openerInterval != null) {
+                        console.error('EmbeddedConnection: openerInterval not null');
+                    }
                     if (this.onPacketCallback) {
                         const arrayBuffer = event.data.packet;
                         const buffer = Buffer.from(arrayBuffer, 0, arrayBuffer.byteLength)
