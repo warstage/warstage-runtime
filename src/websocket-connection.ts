@@ -1,6 +1,7 @@
 // Copyright Felix Ungman. All rights reserved.
 // Licensed under GNU General Public License version 3 or later.
 
+import {Buffer} from 'buffer';
 import {Compressor} from './compressor';
 import {Decompressor} from './decompressor';
 import {Payload} from './messages';

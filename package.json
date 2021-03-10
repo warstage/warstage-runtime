@@ -1,6 +1,6 @@
 {
   "name": "warstage-runtime",
-  "version": "0.2.13",
+  "version": "0.2.14",
   "description": "An API for writing bots and mods for the Warstage war-gaming platform",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

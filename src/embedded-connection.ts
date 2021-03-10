@@ -1,6 +1,7 @@
 // Copyright Felix Ungman. All rights reserved.
 // Licensed under GNU General Public License version 3 or later.
 
+import {Buffer} from 'buffer';
 import {RuntimeConnection} from './runtime-connection';
 import {Payload} from './messages';
 import {Compressor} from './compressor';
