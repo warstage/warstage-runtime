@@ -154,7 +154,7 @@ export class Navigator {
         }
     }
 
-    async createMatch(params: any): Promise<Match> {
+    async createMatch(params: any): Promise<Entity<Match>> {
         const response = await this.system.federation.requestService('CreateMatch', {
             lobbyId: this.lobby.federation.federationId,
             params
@@ -163,7 +163,7 @@ export class Navigator {
         this.battle.federation = this.runtime.joinFederation(matchId);
         this.battle.onEnterBattle.next();
         await this.pingBattleServices_();
-        return this.lobby.federation.getObjectOrNull(matchId) as Match;
+        return this.lobby.federation.getObjectOrNull(matchId) as Entity<Match>;
     }
 
     private async pingBattleServices_(): Promise<void> {
