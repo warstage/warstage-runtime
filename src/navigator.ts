@@ -4,15 +4,16 @@
 import {Subject} from 'rxjs';
 import {Launcher, Player} from './system';
 import {Federation} from './federation';
-import {Match, Module} from './matchmaker';
 import {InputDevicePoster} from './input-device-poster';
 import {Runtime} from './runtime';
+import {Entity} from 'warstage-entities';
+import {Match, Module} from 'warstage-lobby-model';
 
 interface System {
-    readonly onChangePlayer: Subject<Player>;
+    readonly onChangePlayer: Subject<Entity<Player>>;
     federation: Federation;
-    player: Player;
-    launcher: Launcher;
+    player: Entity<Player>;
+    launcher: Entity<Launcher>;
 }
 
 interface Lobby {
@@ -22,7 +23,7 @@ interface Lobby {
     readonly onLeaveMatch: Subject<void>;
     federation: Federation;
     module: Module;
-    match: Match;
+    match: Entity<Match>;
     owner: boolean;
 }
 
@@ -41,7 +42,7 @@ export class Navigator {
     private inputDevicePoster: InputDevicePoster = null;
 
     readonly system: System = {
-        onChangePlayer: new Subject<Player>(),
+        onChangePlayer: new Subject<Entity<Player>>(),
         federation: null,
         player: null,
         launcher: null
@@ -74,7 +75,7 @@ export class Navigator {
         });
     }
 
-    private playerChanged_(player: Player): void {
+    private playerChanged_(player: Entity<Player>): void {
         if (player.$defined$changed && player.$defined) {
             this.system.player = player;
         }
@@ -87,7 +88,7 @@ export class Navigator {
         this.system.onChangePlayer.next(player);
     }
 
-    private launcherChanged_(launcher: Launcher) {
+    private launcherChanged_(launcher: Entity<Launcher>) {
         if (launcher.$defined$changed && launcher.$defined) {
             this.system.launcher = launcher;
         }
@@ -128,7 +129,7 @@ export class Navigator {
             this.lobby.match = null;
         }
         if (newMatchId) {
-            this.lobby.match = this.lobby.federation.getObjectOrNull(newMatchId) as Match;
+            this.lobby.match = this.lobby.federation.getObjectOrNull(newMatchId) as Entity<Match>;
             this.lobby.onEnterMatch.next();
             this.battle.federation = this.runtime.joinFederation(newMatchId);
             this.battle.onEnterBattle.next();

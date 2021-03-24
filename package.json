@@ -1,6 +1,6 @@
 {
   "name": "warstage-runtime",
-  "version": "0.2.14",
+  "version": "0.9.2",
   "description": "An API for writing bots and mods for the Warstage war-gaming platform",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -8,7 +8,9 @@
     "buffer": "~6.0.3",
     "rxjs": "~6.6.6",
     "rxjs-compat": "~6.6.6",
-    "setimmediate": "~1.0.5"
+    "setimmediate": "~1.0.5",
+    "warstage-entities": "0.9.2",
+    "warstage-lobby-model": "0.9.2"
   },
   "devDependencies": {
     "@types/jasmine": "~3.6.6",

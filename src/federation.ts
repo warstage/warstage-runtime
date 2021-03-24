@@ -1,17 +1,18 @@
 // Copyright Felix Ungman. All rights reserved.
 // Licensed under GNU General Public License version 3 or later.
 
-import {ObjectChange, ObjectChangesMessage} from './messages';
 import {Buffer} from 'buffer';
+import {Entity, Value} from 'warstage-entities';
+import {ObjectChange, ObjectChangesMessage} from './messages';
 import {RuntimeSession} from './runtime-session';
 import {generateObjectId} from './object-id';
-import {defineObjectProperty, ObjectClass, ObjectRef, Value} from './object';
+import {defineObjectProperty, ObjectClass } from './object';
 
 
 export class Federation {
-    private objectInstances: { [id: string]: ObjectRef } = {};
-    private undefinedInstances: ObjectRef[] = [];
-    private objectClasses: {[name: string]: ObjectClass<ObjectRef>} = {};
+    private objectInstances: { [id: string]: Entity<any> } = {};
+    private undefinedInstances: Entity<any>[] = [];
+    private objectClasses: {[name: string]: ObjectClass<any>} = {};
     private eventsObservers: { [name: string]: (params: Value) => void } = {};
     private serviceProviders: { [name: string]: (params: Value) => Promise<any | void> } = {};
 
@@ -26,7 +27,7 @@ export class Federation {
         this.federationId = null;
     }*/
 
-    public objects<T extends ObjectRef>(className): ObjectClass<T> {
+    public objects<T>(className): ObjectClass<T> {
         let objectClass = this.objectClasses[className] as ObjectClass<T>;
         if (!objectClass) {
             objectClass = new ObjectClass<T>(this, className);
@@ -35,7 +36,7 @@ export class Federation {
         return objectClass;
     }
 
-    findObject(predicate: (x: any) => boolean): ObjectRef {
+    findObject(predicate: (x: any) => boolean): Entity<any> {
         for (const id in this.objectInstances) {
             if (this.objectInstances.hasOwnProperty(id)) {
                 if (predicate(this.objectInstances[id])) {
@@ -46,7 +47,7 @@ export class Federation {
         return null;
     }
 
-    getObjectOrNull(id: string): ObjectRef {
+    getObjectOrNull(id: string): Entity<any> {
         return this.objectInstances.hasOwnProperty(id) ? this.objectInstances[id] : null;
     }
 
@@ -148,7 +149,7 @@ export class Federation {
         }
     }
 
-    createObjectInstance(className: string): ObjectRef {
+    createObjectInstance(className: string): Entity<any> {
         const result = this.getOrCreateObjectRef(generateObjectId()) as any;
         result._class = className;
         result.$class = this.objects(className);
@@ -158,12 +159,12 @@ export class Federation {
         return result;
     }
 
-    objectPropertyChanged(object: ObjectRef, propertyName: string, value: Value) {
+    objectPropertyChanged(object: Entity<any>, propertyName: string, value: Value) {
         this.runtime.sendObjectChangesToRuntime(this.federationId, object, object._class,
             ObjectChange.UPDATE, propertyName, value);
     }
 
-    private getOrCreateObjectRef(id: string): ObjectRef {
+    private getOrCreateObjectRef(id: string): Entity<any> {
         let objectInstance = this.objectInstances[id];
         if (!objectInstance) {
             const object = {
@@ -225,7 +226,7 @@ export class Federation {
         return value;
     }
 
-    private objectHasUndefinedRefs(objectInstance: ObjectRef): boolean {
+    private objectHasUndefinedRefs(objectInstance: Entity<any>): boolean {
         for (const property in objectInstance as any) {
             if (objectInstance.hasOwnProperty(property)
                 && property.startsWith('-')

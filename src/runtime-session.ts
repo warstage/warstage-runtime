@@ -1,7 +1,7 @@
 // Copyright Felix Ungman. All rights reserved.
 // Licensed under GNU General Public License version 3 or later.
 
-import {Value} from './object';
+import {Value} from 'warstage-entities';
 
 export abstract class RuntimeSession {
     abstract sendObjectChangesToRuntime(

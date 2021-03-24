@@ -3,18 +3,12 @@
 
 import getOwnPropertyDescriptor = Reflect.getOwnPropertyDescriptor;
 import {Federation} from './federation';
-import {PartialObserver, Subject, Subscribable, Subscription} from 'rxjs';
-
-export interface ValueArray extends Array<Value> {}
-export interface ValueStruct { [key: string]: Value; }
-export type Value = undefined | null | boolean | number | string
-    | Uint8Array | ObjectRef | ValueArray | ValueStruct
-    |  { x: number; y: number }
-    |  { x: number; y: number; z: number }
-    |  { x: number, y: number; z: number; w: number }
+import {PartialObserver, Subject, Subscription} from 'rxjs';
+import {Entity, EntityClass, Value} from 'warstage-entities';
 
 
-export function defineObjectProperty(federation: Federation, object: ObjectRef, propertyName: string) {
+
+export function defineObjectProperty(federation: Federation, object: Entity<any>, propertyName: string) {
     if (!getOwnPropertyDescriptor(object, propertyName)) {
         const privateName = '-' + propertyName;
         Object.defineProperty(object, propertyName, {
@@ -30,27 +24,9 @@ export function defineObjectProperty(federation: Federation, object: ObjectRef, 
     }
 }
 
-export interface ObjectRef {
-    // tslint:disable-next-line:variable-name
-    readonly $id: string;
 
-    // tslint:disable-next-line:variable-name
-    readonly _class: string;
-    readonly $class: ObjectClass<ObjectRef>;
-
-    [key: string]: Value | string | ObjectClass<ObjectRef> | (() => any);
-
-    readonly $defined: boolean;
-    readonly $defined$changed: boolean;
-
-    readonly $deletable: boolean;
-    $deletable$wanted: boolean;
-
-    $delete();
-}
-
-export class ObjectClass<T extends ObjectRef> implements Subscribable<T>, Iterable<T> {
-    readonly subject = new Subject<T>();
+export class ObjectClass<T> implements EntityClass<T> {
+    readonly subject = new Subject<Entity<T>>();
     readonly propertyNames: string[] = [];
 
     constructor(public readonly federation: Federation, public readonly name: string) {
@@ -62,7 +38,7 @@ export class ObjectClass<T extends ObjectRef> implements Subscribable<T>, Iterab
         }
     }
 
-    create(properties?: {[key: string]: Value}): T {
+    create(properties?: {[key: string]: Value}): Entity<T> {
         const result = this.federation.createObjectInstance(this.name);
         for (const propertyName of this.propertyNames) {
             defineObjectProperty(this.federation, result, propertyName);
@@ -75,29 +51,29 @@ export class ObjectClass<T extends ObjectRef> implements Subscribable<T>, Iterab
                 }
             }
         }
-        return result as T;
+        return result as Entity<T>;
     }
 
-    subscribe(observer?: PartialObserver<T> | null | undefined | ((value: T) => void),
+    subscribe(observer?: PartialObserver<Entity<T>> | null | undefined | ((value: Entity<T>) => void),
               error?: null | undefined | ((error: any) => void),
               complete?: () => void): Subscription {
         // @ts-ignore
         return this.subject.subscribe(observer, error, complete);
     }
 
-    *[Symbol.iterator](): Iterator<T> {
-        const objectInstances = (this.federation as any).objectInstances as { [id: string]: ObjectRef };
+    *[Symbol.iterator](): Iterator<Entity<T>> {
+        const objectInstances = (this.federation as any).objectInstances as { [id: string]: Entity<T> };
         for (const id in objectInstances) {
             if (objectInstances.hasOwnProperty(id)) {
                 const objectInstance = objectInstances[id];
                 if ((objectInstance as any)._defined && objectInstance.$class === this) {
-                    yield objectInstance as T;
+                    yield objectInstance as Entity<T>;
                 }
             }
         }
     }
 
-    find(predicate: (objectInstance: T) => boolean) {
+    find(predicate: (objectInstance: Entity<T>) => boolean) {
         for (const objectInstance of this) {
             if (predicate(objectInstance)) {
                 return objectInstance;

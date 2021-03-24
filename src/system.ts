@@ -1,20 +1,15 @@
 // Copyright Felix Ungman. All rights reserved.
 // Licensed under GNU General Public License version 3 or later.
 
-import {ObjectRef} from './object';
-
-export interface Player extends ObjectRef {
+export interface Player {
     playerId: string;
     playerName: string;
     playerIcon: string;
 }
 
-export interface LauncherState  {
+export interface Launcher  {
     lobbyId: string;
     matchId: string;
     allowCreateMatch: boolean;
     allowHostMatch: boolean;
-}
-
-export interface Launcher extends LauncherState, ObjectRef {
 }

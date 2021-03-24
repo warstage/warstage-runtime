@@ -1,6 +1,8 @@
 // Copyright Felix Ungman. All rights reserved.
 // Licensed under GNU General Public License version 3 or later.
 
+import {Value} from 'warstage-entities';
+
 require('setimmediate');
 
 import {Federation} from './federation';
@@ -15,7 +17,6 @@ import {
     ServiceRejectMessage,
     ServiceRequestMessage
 } from './messages';
-import {Value} from './object';
 import {RuntimeConnection} from './runtime-connection';
 import {RuntimeSession} from './runtime-session';
 import {RuntimeConfiguration} from './runtime-configuration';
