@@ -59,6 +59,10 @@ export class EmbeddedConnection implements RuntimeConnection {
         }
     }
 
+    shutdown() {
+        this.close();
+    }
+
     sendPacket(payload: Payload) {
        this.sendMessage({ packet: this.compressor.encode(payload) });
     }

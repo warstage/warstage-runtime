@@ -14,6 +14,7 @@ export class WebSocketConnection implements RuntimeConnection {
     private onPacketCallback: (Payload) => void;
     private webSocket: WebSocket = null;
     private isOpen = false;
+    private isShutdown = false;
     private compressor: Compressor = null;
     private decompressor: Decompressor = null;
     private reopener: Timeout;
@@ -54,6 +55,9 @@ export class WebSocketConnection implements RuntimeConnection {
     }
 
     open() {
+        if (this.isShutdown) {
+            return;
+        }
         if (!this.reopener) {
             this.reopener = global.setInterval(() => {
                 if (!this.webSocket) {
@@ -134,6 +138,11 @@ export class WebSocketConnection implements RuntimeConnection {
             this.reopener = null;
         }
         this.reset();
+    }
+
+    shutdown() {
+        this.isShutdown = true;
+        this.close();
     }
 
     sendPacket(payload: Payload) {

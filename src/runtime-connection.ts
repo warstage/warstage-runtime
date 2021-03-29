@@ -9,5 +9,6 @@ export interface RuntimeConnection {
     onPacket(callback: (Payload) => void): void;
     open();
     close();
+    shutdown(); // for debugging only
     sendPacket(payload: Payload);
 }
