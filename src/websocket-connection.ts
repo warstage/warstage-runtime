@@ -8,19 +8,25 @@ import {Payload} from './messages';
 import {RuntimeConnection} from './runtime-connection';
 import Timeout = NodeJS.Timeout;
 
+enum ConnectionState {
+    None,
+    Opening,
+    Open,
+    Closed
+}
+
 export class WebSocketConnection implements RuntimeConnection {
     private onOpenCallback: () => void;
     private onCloseCallback: () => void;
     private onPacketCallback: (Payload) => void;
     private webSocket: WebSocket = null;
-    private isOpen = false;
-    private isShutdown = false;
     private compressor: Compressor = null;
     private decompressor: Decompressor = null;
-    private reopener: Timeout;
+    private openerInterval: Timeout;
     private queueOut: Payload[] = [];
     private queueIn: Blob[] = [];
     private reader: FileReader = null;
+    private state = ConnectionState.None;
 
     static toHexString(byteArray) {
         return Array.from(byteArray, (byte: number) => {
@@ -30,16 +36,6 @@ export class WebSocketConnection implements RuntimeConnection {
     }
 
     constructor(private url) {
-    }
-
-    private reset() {
-        this.webSocket = null;
-        this.isOpen = false;
-        this.compressor = null;
-        this.decompressor = null;
-        this.queueOut = [];
-        this.queueIn = [];
-        this.reader = null;
     }
 
     onOpen(callback: () => void): void {
@@ -55,71 +51,102 @@ export class WebSocketConnection implements RuntimeConnection {
     }
 
     open() {
-        if (this.isShutdown) {
-            return;
-        }
-        if (!this.reopener) {
-            this.reopener = global.setInterval(() => {
-                if (!this.webSocket) {
-                    // console.log('WebSocketSession reopen');
-                    this.open();
-                }
-            }, 500);
-        }
-
         if (!this.onPacket) {
-            // console.error('WebSocketSession.open: missing onMessage callback');
+            console.error('WebSocketSession.open: missing onMessage callback');
             return;
+        }
+        if (this.state === ConnectionState.None) {
+            this.state = ConnectionState.Opening;
+            this.startOpenerInterval_();
+            this.tryOpenWebSocket_();
+        }
+    }
+
+    close() {
+        this.shutdown_();
+    }
+
+    shutdown() {
+        this.shutdown_();
+    }
+
+    sendPacket(payload: Payload) {
+        switch (this.state) {
+            case ConnectionState.None:
+            case ConnectionState.Opening:
+                this.queueOut.push(payload);
+                break;
+            case ConnectionState.Open:
+                const data = this.compressor.encode({p: payload});
+                this.webSocket.send(data.buffer);
+                break;
+        }
+    }
+
+    private startOpenerInterval_() {
+        this.openerInterval = global.setInterval(() => {
+            this.tryOpenWebSocket_();
+        }, 500);
+    }
+
+    private stopOpenerInterval_() {
+        if (this.openerInterval) {
+            clearInterval(this.openerInterval);
+            this.openerInterval = null;
+        }
+    }
+
+    private tryOpenWebSocket_() {
+        if (this.webSocket) {
+            return;
+        }
+        if (this.state !== ConnectionState.Opening) {
+            return console.error(`WebSocketSession.tryOpenWebSocket_: invalid state ${this.state}`);
         }
         this.webSocket = new WebSocket(this.url, 'warstage');
         this.webSocket.addEventListener('open', () => {
-            // console.log("WebSocketSession open", event);
-            this.isOpen = true;
+            this.stopOpenerInterval_();
+            this.state = ConnectionState.Open;
             this.compressor = new Compressor();
             this.decompressor = new Decompressor();
             if (this.onOpenCallback) {
                 this.onOpenCallback();
             }
-            for (const payload of this.queueOut) {
-                const data = this.compressor.encode({p: payload});
-                this.webSocket.send(data.buffer);
-            }
+            const queueOut = this.queueOut;
             this.queueOut = [];
+            for (const payload of queueOut) {
+                this.sendPacket(payload);
+            }
         });
         this.webSocket.addEventListener('close', () => {
-            // console.log("WebSocketSession close", event);
-            this.reset();
-            if (this.onCloseCallback) {
-                this.onCloseCallback();
+            if (this.state === ConnectionState.Opening) {
+                this.reset_();
+            } else {
+                this.shutdown_();
             }
         });
         this.webSocket.addEventListener('error', () => {
-            // console.error('WebSocketSession error', event);
-            this.reset();
+            if (this.state === ConnectionState.Opening) {
+                this.reset_();
+            } else {
+                this.shutdown_();
+            }
         });
 
         this.webSocket.addEventListener('message', event => {
             this.queueIn.push(event.data);
-            this.tryProcessQueueIn();
-
+            this.tryProcessQueueIn_();
         });
     }
 
-    tryProcessQueueIn() {
+    private tryProcessQueueIn_() {
         if (!this.reader && this.queueIn.length) {
             const reader = new FileReader();
             reader.onload = () => {
                 if (reader === this.reader) {
                     this.reader = null;
-                    const arrayBuffer = reader.result as ArrayBuffer;
-                    try {
-                        const packet: any = this.decompressor.decode(Buffer.from(arrayBuffer, 0, arrayBuffer.byteLength));
-                        this.onPacketCallback(packet.p);
-                        this.tryProcessQueueIn();
-                    } catch (error) {
-                        // console.error('WebSocketSession', error);
-                        this.isOpen = false;
-                        this.webSocket.close();
+                    if (this.state === ConnectionState.Open) {
+                        this.processIncoming_(reader.result as ArrayBuffer);
                     }
                 }
             };
@@ -128,29 +155,34 @@ export class WebSocketConnection implements RuntimeConnection {
         }
     }
 
-    close() {
-        this.isOpen = false;
-        if (this.webSocket) {
+    private processIncoming_(arrayBuffer: ArrayBuffer) {
+        try {
+            const packet: any = this.decompressor.decode(Buffer.from(arrayBuffer, 0, arrayBuffer.byteLength));
+            this.onPacketCallback(packet.p);
+            this.tryProcessQueueIn_();
+        } catch (error) {
             this.webSocket.close();
         }
-        if (this.reopener) {
-            clearInterval(this.reopener);
-            this.reopener = null;
-        }
-        this.reset();
     }
 
-    shutdown() {
-        this.isShutdown = true;
-        this.close();
+    private shutdown_() {
+        this.stopOpenerInterval_();
+        if (this.state === ConnectionState.Open && this.onCloseCallback) {
+            this.onCloseCallback();
+        }
+        this.state = ConnectionState.Closed;
+        if (this.webSocket) {
+            if (this.webSocket.readyState === WebSocket.OPEN) {
+                this.webSocket.close();
+            }
+        }
+        this.reset_();
     }
 
-    sendPacket(payload: Payload) {
-        if (this.isOpen) {
-            const data = this.compressor.encode({p: payload});
-            this.webSocket.send(data.buffer);
-        } else {
-            this.queueOut.push(payload);
-        }
+    private reset_() {
+        this.webSocket = null;
+        this.compressor = null;
+        this.decompressor = null;
+        this.reader = null;
     }
 }

@@ -120,6 +120,7 @@ export class Runtime extends RuntimeSession {
             }
             this.trySendAuthenticateMessage();
             this.outgoingPayloads = outgoingPayloads;
+            this.flushOutgoingPayloads();
         });
         this.connection.onClose(() => {
             this.connectionIsOpen = false;
@@ -271,12 +272,7 @@ export class Runtime extends RuntimeSession {
 
     private enqueueOrSendOutgoingPayload(payload: Payload): void {
         if (this.connectionIsOpen) {
-            if (this.outgoingPayloads) {
-                for (const outgoingPayload of this.outgoingPayloads) {
-                    this.connection.sendPacket(outgoingPayload );
-                }
-                this.outgoingPayloads = null;
-            }
+            this.flushOutgoingPayloads();
             if (payload.m === PacketType.Messages) {
                 this.enqueueOutgoingMessages(payload.mm);
             } else {
@@ -285,6 +281,15 @@ export class Runtime extends RuntimeSession {
             }
         } else {
             this.outgoingPayloads.push(payload);
+        }
+    }
+
+    private flushOutgoingPayloads() {
+        if (this.outgoingPayloads) {
+            for (const outgoingPayload of this.outgoingPayloads) {
+                this.connection.sendPacket(outgoingPayload);
+            }
+            this.outgoingPayloads = null;
         }
     }
 
