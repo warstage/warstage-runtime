@@ -51,6 +51,18 @@ export class Runtime extends RuntimeSession {
         if (value == null) {
             return null;
         }
+
+        if (value.message) {
+            const lines = value.message.split('\n');
+            if (lines.length >= 2 && lines[0].startsWith('Uncaught (in promise):') && lines[0].endsWith(lines[1])) {
+                lines.splice(0, 1);
+                const error = new Error(lines[0]);
+                error.name = lines[0].split(':', 1)[0];
+                error.stack = lines.join('\n');
+                return error;
+            }
+        }
+
         if (Object.prototype.toString.call(value) === '[object Error]') {
             return value;
         }
