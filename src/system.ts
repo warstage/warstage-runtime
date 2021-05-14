@@ -8,6 +8,7 @@ export interface Player {
 }
 
 export interface Launcher  {
+    snapshotId: string;
     lobbyId: string;
     matchId: string;
     allowCreateMatch: boolean;
