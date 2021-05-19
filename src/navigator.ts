@@ -161,6 +161,9 @@ export class Navigator {
         });
         const matchId = response.matchId as string;
         this.battle.federation = this.runtime.joinFederation(matchId);
+        this.battle.federation.objects('Terrain').create({
+            map: params.map
+        });
         this.battle.onEnterBattle.next();
         await this.pingBattleServices_();
         return this.lobby.federation.getObjectOrNull(matchId) as Entity<Match>;
