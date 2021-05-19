@@ -11,6 +11,7 @@ export interface Launcher  {
     snapshotId: string;
     lobbyId: string;
     matchId: string;
+    battleId: string;
     allowCreateMatch: boolean;
     allowHostMatch: boolean;
 }
