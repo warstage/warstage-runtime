@@ -41,7 +41,12 @@ export class Runtime extends RuntimeSession {
         [requestId: number]: { federationId: string, resolve: (x: Value) => void, reject: (x: Value | Error) => void }
     } = {};
     private lastServiceRequestId = 0;
-    private authentication: Authentication = null;
+    private authentication: Authentication = {
+        accessToken: '',
+        subjectId: '_',
+        nickname: 'Player',
+        imageUrl: ''
+    };
 
     private outgoingPayloads: Payload[] = [];
     private outgoingMessages: Message[] = [];
